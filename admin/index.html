@@ -97,6 +97,7 @@ tr.off td{color:var(--muted)}
 .badge.warn{background:#fef3c7;color:#92400e}
 .badge.off{background:#f1f5f9;color:var(--muted)}
 .num{font-variant-numeric:tabular-nums}
+.nw{white-space:nowrap}
 .empty{padding:44px 16px;text-align:center;color:var(--muted)}
 .acts{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap}
 @media (max-width:760px){td .acts{flex-wrap:nowrap}}
@@ -338,15 +339,35 @@ function drawMonth() {
       '<div class="kpi' + (open ? ' hl' : '') + '"><small>במשמרת עכשיו</small><b class="num">' + open + '</b></div>' +
       '<div class="kpi' + (flagged ? ' bad' : '') + '"><small>משמרות לבדיקה</small><b class="num">' + flagged + '</b></div>' +
     '</div>' +
-    (d.people.length ? '<div class="card"><table><thead><tr><th>שם</th><th class="hide-sm">תפקיד</th><th>ימי עבודה</th><th>שעות</th><th>מצב</th></tr></thead><tbody>' +
+    (d.people.length ? '<div class="card"><table><thead><tr><th>שם</th><th class="hide-sm">תפקיד</th><th>ימי עבודה</th><th>שעות</th><th>דיווח אחרון</th><th class="hide-sm">מצב</th>' + (isAdmin() ? '<th></th>' : '') + '</tr></thead><tbody>' +
       people.map(function (p) {
+        var last = lastShift(d.entries, p.id);
         return '<tr class="r" data-p="' + esc(p.id) + '"><td class="name">' + esc(p.name) + '</td><td class="hide-sm muted">' + esc(p.role || '') + '</td>' +
           '<td class="num">' + p.days + '</td><td class="num"><b>' + dec(p.minutes) + '</b> <span class="sub">(' + hm(p.minutes) + ')</span></td>' +
-          '<td>' + (p.open ? '<span class="badge on">● במשמרת</span> ' : '') + (p.flagged ? '<span class="badge warn">⚠ ' + p.flagged + ' לבדיקה</span>' : (!p.open ? '<span class="sub">—</span>' : '')) + '</td></tr>';
+          '<td class="num">' + (last ? '<span class="nw">' + dow(last.date) + ' ' + dmy(last.date) + '</span> <span class="sub nw">' + esc(last.in) + '–' + (last.out ? esc(last.out) : 'פתוח') + '</span>' : '<span class="sub">—</span>') + '</td>' +
+          '<td class="hide-sm">' + (p.open ? '<span class="badge on">● במשמרת</span> ' : '') + (p.flagged ? '<span class="badge warn">⚠ ' + p.flagged + ' לבדיקה</span>' : (!p.open ? '<span class="sub">—</span>' : '')) + '</td>' +
+          (isAdmin() ? '<td>' + (p.clockUrl && p.phone ? '<button class="btn ghost sm" data-wam="' + esc(p.id) + '" title="שליחת הקישור האישי לשעון בוואטסאפ">💬<span class="hide-sm"> קישור בוואטסאפ</span></button>' : '') + '</td>' : '') + '</tr>';
       }).join('') + '</tbody></table></div>'
       : '<div class="card"><div class="empty">אין עדיין אנשי צוות פעילים. הוסיפו אותם בלשונית "צוות וקישורים".</div></div>') +
     '<p class="hint">לחיצה על עובד פותחת את פירוט המשמרות שלו — שם אפשר לתקן שעות או להוסיף משמרת שנשכחה.</p>';
   document.querySelectorAll('[data-p]').forEach(function (tr) { tr.onclick = function () { openPerson(tr.getAttribute('data-p')); }; });
+  document.querySelectorAll('[data-wam]').forEach(function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation();
+      var p = d.people.filter(function (x) { return x.id === b.getAttribute('data-wam'); })[0];
+      if (p) sendClockLink(p.name, p.phone, p.clockUrl);
+    };
+  });
+}
+function lastShift(entries, id) {
+  var last = null;
+  entries.forEach(function (e) { if (e.staffId === id && (!last || (e.date + e.in) >= (last.date + last.in))) last = e; });
+  return last;
+}
+function sendClockLink(name, phone, url) {
+  var msg = 'היי ' + String(name || '').split(' ')[0] + ', זה הקישור האישי שלך לדיווח שעות במעוף לחינוך:\n' + url + '\nבתחילת העבודה לוחצים "התחלתי לעבוד" ובסוף "סיימתי". כדאי לשמור את הקישור במסך הבית.';
+  var num = String(phone || '').replace(/\D/g, '').replace(/^0/, '972');
+  window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
 }
 function openPerson(id) {
   var d = S.hours.data, p = d.people.filter(function (x) { return x.id === id; })[0];
@@ -434,12 +455,7 @@ function drawStaff() {
   document.querySelectorAll('[data-ed]').forEach(function (b) { b.onclick = function () { staffModal(byId(b.getAttribute('data-ed'))); }; });
   document.querySelectorAll('[data-cp]').forEach(function (b) { b.onclick = function () { copy(byId(b.getAttribute('data-cp')).clockUrl); }; });
   document.querySelectorAll('[data-wa]').forEach(function (b) {
-    b.onclick = function () {
-      var s = byId(b.getAttribute('data-wa'));
-      var msg = 'היי ' + s.name.split(' ')[0] + ', זה הקישור האישי שלך לדיווח שעות במעוף לחינוך:\n' + s.clockUrl + '\nבתחילת העבודה לוחצים "התחלתי לעבוד" ובסוף "סיימתי". כדאי לשמור את הקישור במסך הבית.';
-      var num = String(s.phone || '').replace(/\D/g, '').replace(/^0/, '972');
-      window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
-    };
+    b.onclick = function () { var s = byId(b.getAttribute('data-wa')); sendClockLink(s.name, s.phone, s.clockUrl); };
   });
 }
 function copy(text) {
