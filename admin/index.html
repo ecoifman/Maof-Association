@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>מעוף לחינוך — ניהול</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--panel:#fff;--ink:#0f1f2e;--ink2:#334155;--muted:#64748b;--line:#e2e8f0;--line2:#eef2f6;--brand:#0f766e;--brand2:#14b8a6;--soft:#e6f6f4;--accent:#f97360;--danger:#dc2626;--warn:#d97706;--ok:#16a34a;--shadow:0 1px 2px rgba(15,31,46,.06),0 4px 16px rgba(15,31,46,.06);--r:12px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Heebo,Assistant,"Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit;padding:0}
+input,select,textarea{font:inherit;font-size:14px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--brand2);box-shadow:0 0 0 3px rgba(20,184,166,.15)}
+input[type=checkbox]{width:auto;accent-color:var(--brand)}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{margin:0;font-weight:700;line-height:1.25}
+.ltr{direction:ltr;unicode-bidi:embed;display:inline-block}
+.muted{color:var(--muted)}
+.hide{display:none!important}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-weight:600;font-size:13.5px;background:var(--brand);color:#fff;white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:#fff;color:var(--ink2);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--line2);filter:none}
+.btn.danger{background:#fff;color:var(--danger);border:1px solid #fecaca}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.55;cursor:default}
+.icon{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;color:var(--ink2);font-size:16px}
+.icon:hover{background:var(--line2)}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex:none}
+/* login */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(1200px 600px at 80% -10%,#d7f3ef 0,transparent 60%),radial-gradient(900px 500px at 0 110%,#ffe4de 0,transparent 55%),var(--bg)}
+.login-card{width:100%;max-width:380px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(15,31,46,.12);padding:32px 28px}
+.login-card h1{font-size:22px;margin:14px 0 4px}
+.login-card p{color:var(--muted);margin:0 0 18px;font-size:13.5px}
+.login-card label{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin:12px 0 5px}
+.login-card .btn{width:100%;justify-content:center;margin-top:20px;padding:11px}
+.err{color:var(--danger);font-size:13px;margin-top:10px;min-height:18px}
+/* shell */
+.top{position:sticky;top:0;z-index:10;height:58px;display:flex;align-items:center;gap:12px;padding:0 16px;background:#fff;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer}
+.brand b{display:block;font-size:15px}
+.brand small{display:block;color:var(--muted);font-size:12px}
+.crumb{display:flex;align-items:center;gap:6px;color:var(--muted);font-weight:600;font-size:14px}
+.crumb b{color:var(--ink)}
+.top-end{margin-inline-start:auto;display:flex;align-items:center;gap:6px;position:relative}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--soft);color:var(--brand);font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+.userbtn{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 10px;border-radius:22px}
+.userbtn:hover{background:var(--line2)}
+.menu{position:absolute;top:46px;left:0;min-width:210px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:20}
+.menu button{display:block;width:100%;text-align:right;padding:9px 12px;border-radius:8px;font-size:13.5px}
+.menu button:hover{background:var(--line2)}
+.menu-head{padding:8px 12px 10px;border-bottom:1px solid var(--line2);margin-bottom:4px;font-size:12.5px;color:var(--muted)}
+.menu-head b{display:block;color:var(--ink);font-size:14px}
+main{max-width:1180px;margin:0 auto;padding:20px 18px 60px}
+/* home */
+.hello{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:6px 0 18px;flex-wrap:wrap}
+.hello h1{font-size:24px}
+.hello p{margin:4px 0 0;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.tile{position:relative;display:flex;flex-direction:column;gap:10px;text-align:right;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);min-height:150px;transition:border-color .15s,transform .15s}
+.tile:hover{border-color:#b6e4de;transform:translateY(-1px)}
+.tile .ti{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--tc,var(--soft))}
+.tile h3{font-size:17px}
+.tile p{margin:0;color:var(--muted);font-size:13px}
+.tile .tag{position:absolute;top:14px;left:14px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--line2);color:var(--muted)}
+.tile.soon{opacity:.62;cursor:default}
+.tile.soon:hover{transform:none;border-color:var(--line)}
+.tile .ext{position:absolute;top:16px;left:16px;color:var(--muted);font-size:14px}
+/* module */
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.bar h2{font-size:20px;margin-inline-end:6px}
+.spacer{flex:1}
+.seg{display:inline-flex;background:#e9eef2;border-radius:10px;padding:3px;gap:2px}
+.seg button{padding:7px 14px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(15,31,46,.1)}
+.month{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px}
+.month b{min-width:110px;text-align:center;font-size:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.kpi small{display:block;color:var(--muted);font-size:12.5px;font-weight:600}
+.kpi b{display:block;font-size:26px;font-weight:800;margin-top:4px;line-height:1.1}
+.kpi.hl b{color:var(--brand)}.kpi.bad b{color:var(--danger)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:auto}
+table{border-collapse:collapse;width:100%}
+th{position:sticky;top:0;background:#f8fafc;font-size:12px;color:var(--muted);font-weight:600;padding:10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:right}
+td{padding:10px;border-bottom:1px solid var(--line2);vertical-align:middle;text-align:right}
+tr.r{cursor:pointer}
+tr.r:hover td{background:#f8fbfb}
+tr.off td{color:var(--muted)}
+.name{font-weight:600}
+.sub{color:var(--muted);font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;background:var(--line2);color:var(--ink2);white-space:nowrap}
+.badge.on{background:#dcfce7;color:#166534}
+.badge.warn{background:#fef3c7;color:#92400e}
+.badge.off{background:#f1f5f9;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.empty{padding:44px 16px;text-align:center;color:var(--muted)}
+.acts{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap}
+@media (max-width:760px){td .acts{flex-wrap:nowrap}}
+.chk{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;cursor:pointer;user-select:none;background:#fff}
+.chk.on{background:var(--soft);border-color:#b6e4de;color:var(--brand);font-weight:600}
+.chk.lock{opacity:.6;cursor:default}
+/* drawer + modal */
+.dim{position:fixed;inset:0;background:rgba(15,31,46,.3);z-index:40;animation:fade .15s}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(520px,100%);background:#fff;z-index:41;box-shadow:0 0 40px rgba(15,31,46,.2);display:flex;flex-direction:column;animation:slide .2s ease-out}
+@keyframes slide{from{transform:translateX(-30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.dh{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px}
+.dh h2{font-size:19px}
+.db{flex:1;overflow:auto;padding:14px 18px 24px}
+.shift{display:grid;grid-template-columns:86px 1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2)}
+.shift input{padding:6px 8px}
+.shift .meta{grid-column:1/-1;font-size:12px;color:var(--muted);margin-top:-4px}
+.flag{color:var(--warn);font-weight:700}
+.modal-wrap{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,31,46,.35);animation:fade .15s}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:460px;max-height:calc(100% - 32px);overflow:auto;box-shadow:0 24px 64px rgba(15,31,46,.25)}
+.mh{padding:18px 20px 6px;display:flex;align-items:center;gap:8px}
+.mh h3{font-size:17px;flex:1}
+.mb{padding:8px 20px}
+.mf{padding:12px 20px 18px;display:flex;gap:8px}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:13.5px;z-index:90;box-shadow:var(--shadow);animation:fade .15s;max-width:90%}
+.toast.err{background:var(--danger)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading{padding:40px;text-align:center;color:var(--muted)}
+.mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.mat{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+.mat:hover{border-color:#b6e4de}
+.mat .mi{width:38px;height:38px;border-radius:10px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+.mat b{display:block}
+.cat{margin:18px 0 8px;font-size:13px;color:var(--muted);font-weight:700}
+.note{background:#f0fdfa;border:1px solid #ccfbf1;border-radius:10px;padding:10px 12px;font-size:13px;color:#115e59;margin-bottom:14px}
+@media (max-width:760px){
+  main{padding:14px 10px 60px}
+  .brand small,.userbtn span:not(.avatar),.hide-sm{display:none}
+  .tiles{grid-template-columns:1fr 1fr;gap:10px}
+  .tile{min-height:0;padding:14px;gap:8px}
+  .tile .ti{width:40px;height:40px;font-size:19px}
+  .tile h3{font-size:15px}
+  .tile p{font-size:12px}
+  .hello h1{font-size:21px}
+  .grid2{grid-template-columns:1fr}
+  td,th{padding:8px 6px}
+  .shift{grid-template-columns:80px 1fr 1fr}
+  .shift .acts{grid-column:1/-1;justify-content:flex-start}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+'use strict';
+// אם הדף פתוח מחוץ ל-Apps Script (בדיקות / הטמעה) — אפשר להעביר ?api=<כתובת ה-Web App>
+var API_URL = 'https://script.google.com/macros/s/AKfycbwTm9c5HPEDwkrHTjZs1ge1SSTdgYDT_7JwNFS361rQENnLscxjyaT5Z6YMe3scof_MFA/exec';   // כשהדף מוגש מאתר חיצוני (GitHub Pages) — קריאות XHR לשרת
+var CRM_URL = 'https://maof-edu.org/%D7%A0%D7%99%D7%94%D7%95%D7%9C-%D7%9C%D7%99%D7%93%D7%99%D7%9D-2/';
+
+var TILES = [
+  { key: 'leads', ic: '📇', c: '#dbeafe', name: 'לידים', desc: 'פניות, סטטוסים, תזכורות ופגישות', ext: true },
+  { key: 'activities', ic: '🗓', c: '#fef3c7', name: 'יומן פעילות', desc: 'פעילויות לפי מוסד, תוכנית ומדריך', soon: true },
+  { key: 'hours', ic: '⏱', c: '#dcfce7', name: 'דיווחי שעות', desc: 'נוכחות חודשית, תיקונים, ייצוא וקישורי שעון לצוות' },
+  { key: 'reports', ic: '📝', c: '#fce7f3', name: 'דיווחי מדריכים', desc: 'מפגשים שדווחו מהשטח ואישורי חודש', soon: true },
+  { key: 'materials', ic: '📁', c: '#ede9fe', name: 'חומרים', desc: 'מצגות, טפסים ומסמכים של העמותה' },
+  { key: 'users', ic: '🔐', c: '#e0f2fe', name: 'משתמשים והרשאות', desc: 'מי נכנס למערכת ולאילו מודולים', admin: true }
+];
+var MOD_NAMES = { leads: 'לידים', activities: 'יומן פעילות', hours: 'דיווחי שעות', reports: 'דיווחי מדריכים', materials: 'חומרים' };
+
+var LS = {
+  get: function (k, d) { try { var v = localStorage.getItem('maofhub_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: function (k, v) { try { localStorage.setItem('maofhub_' + k, JSON.stringify(v)); } catch (e) {} },
+  del: function (k) { try { localStorage.removeItem('maofhub_' + k); } catch (e) {} }
+};
+var S = { token: LS.get('token', ''), user: LS.get('user', null), view: 'home', menu: false,
+          hours: { month: thisMonth(), tab: 'month', data: null, staff: null, roles: [], sel: null },
+          users: null, mods: [], mats: null };
+
+/* ---------- עזרים ---------- */
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function thisMonth() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
+function shiftMonth(m, n) { var p = m.split('-'); var d = new Date(+p[0], +p[1] - 1 + n, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
+var MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+function monthName(m) { var p = m.split('-'); return MONTHS[+p[1] - 1] + ' ' + p[0]; }
+function hm(min) { min = Math.max(0, Math.round(min || 0)); return Math.floor(min / 60) + ':' + pad(min % 60); }
+function dec(min) { return (Math.round((min || 0) / 6) / 10).toFixed(1); }
+function dmy(iso) { var p = String(iso || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] : iso; }
+var DOW = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
+function dow(iso) { var p = iso.split('-'); return DOW[new Date(+p[0], +p[1] - 1, +p[2]).getDay()]; }
+function initials(n) { n = String(n || '').trim(); if (!n) return '?'; var p = n.split(/\s+/); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
+function isAdmin() { return S.user && S.user.role === 'admin'; }
+function can(k) { return isAdmin() || (S.user && (S.user.modules || []).indexOf(k) >= 0); }
+function toast(msg, err) {
+  var t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(function () { t.remove(); }, err ? 6000 : 3000);
+}
+var ERRS = { forbidden: 'אין לך הרשאה לפעולה הזו', bad_login: 'שם משתמש או סיסמה שגויים', locked: 'יותר מדי ניסיונות — נסו שוב בעוד 15 דקות', not_found: 'הרשומה לא נמצאה — רעננו' };
+function errMsg(e) { var s = (e && (e.error || e.message)) || String(e); return ERRS[s] || s; }
+
+/* ---------- תקשורת ---------- */
+function api(action, data) {
+  var body = Object.assign({ action: action, token: S.token }, data || {});
+  return new Promise(function (resolve, reject) {
+    function done(r) {
+      if (!r) return reject(new Error('תשובה ריקה מהשרת'));
+      if (!r.ok && r.error === 'auth' && action !== 'login') { logout(true); return reject(new Error('פג תוקף ההתחברות — היכנסו שוב')); }
+      if (!r.ok) return reject(r);
+      resolve(r);
+    }
+    if (window.google && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(done).withFailureHandler(function (e) { reject(new Error(e && e.message || 'שגיאת שרת')); }).hubApi(JSON.stringify(body));
+      return;
+    }
+    var x = new XMLHttpRequest();
+    x.open('POST', API_URL); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); x.timeout = 60000;
+    x.onload = function () { var r; try { r = JSON.parse(x.responseText); } catch (e) { return reject(new Error('תשובה לא תקינה מהשרת')); } done(r); };
+    x.onerror = function () { reject(new Error('אין חיבור לשרת')); };
+    x.ontimeout = function () { reject(new Error('השרת לא הגיב')); };
+    x.send(JSON.stringify(body));
+  });
+}
+
+/* ---------- כניסה ---------- */
+function renderLogin(msg) {
+  $('app').innerHTML =
+    '<div class="login"><form class="login-card" id="lf" autocomplete="on">' +
+    '<span class="logo">מ</span><h1>מעוף לחינוך — ניהול</h1><p>כניסה עם שם המשתמש של מערכת הלידים</p>' +
+    '<label for="lu">שם משתמש</label><input id="lu" name="username" autocomplete="username" dir="ltr" required>' +
+    '<label for="lp">סיסמה</label><input id="lp" name="password" type="password" autocomplete="current-password" dir="ltr" required>' +
+    '<button class="btn" id="lb" type="submit">כניסה</button><div class="err" id="le">' + esc(msg || '') + '</div></form></div>';
+  $('lf').onsubmit = function (ev) {
+    ev.preventDefault();
+    $('lb').disabled = true; $('lb').innerHTML = '<span class="spin"></span>'; $('le').textContent = '';
+    api('login', { username: $('lu').value.trim(), password: $('lp').value }).then(function (r) {
+      S.token = r.token; S.user = r.user; LS.set('token', r.token); LS.set('user', r.user);
+      S.view = 'home'; render();
+    }, function (e) { $('lb').disabled = false; $('lb').textContent = 'כניסה'; $('le').textContent = errMsg(e); });
+  };
+  setTimeout(function () { var u = $('lu'); if (u) u.focus(); }, 50);
+}
+function logout(expired) {
+  if (!expired && S.token) api('logout').catch(function () {});
+  S.token = ''; S.user = null; LS.del('token'); LS.del('user');
+  renderLogin(expired ? 'פג תוקף ההתחברות — היכנסו שוב' : '');
+}
+
+/* ---------- מעטפת ---------- */
+function render() {
+  if (!S.token || !S.user) return renderLogin();
+  var cur = TILES.filter(function (t) { return t.key === S.view; })[0];
+  $('app').innerHTML =
+    '<header class="top">' +
+      '<div class="brand" data-go="home"><span class="logo">מ</span><div><b>מעוף לחינוך</b><small>ניהול העמותה</small></div></div>' +
+      (cur ? '<div class="crumb"><span>›</span><b>' + esc(cur.name) + '</b></div>' : '') +
+      '<div class="top-end">' +
+        (S.view !== 'home' ? '<button class="btn ghost sm" data-go="home">תפריט ראשי</button>' : '') +
+        '<button class="userbtn" id="ub"><span>' + esc(S.user.name) + '</span><span class="avatar">' + esc(initials(S.user.name)) + '</span></button>' +
+        (S.menu ? '<div class="menu" id="um"><div class="menu-head"><b>' + esc(S.user.name) + '</b>' + (isAdmin() ? 'מנהל/ת' : 'משתמש/ת') + ' · <span class="ltr">' + esc(S.user.username) + '</span></div>' +
+          '<button id="mpw">שינוי סיסמה</button><button id="mlo">יציאה</button></div>' : '') +
+      '</div>' +
+    '</header><main id="main"></main>';
+  document.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { go(b.getAttribute('data-go')); }; });
+  $('ub').onclick = function (e) { e.stopPropagation(); S.menu = !S.menu; render(); };
+  if (S.menu) { $('mpw').onclick = function () { S.menu = false; render(); pwModal(); }; $('mlo').onclick = function () { S.menu = false; logout(); }; }
+  ({ home: viewHome, hours: viewHours, users: viewUsers, materials: viewMaterials }[S.view] || viewHome)();
+}
+document.addEventListener('click', function () { if (S.menu) { S.menu = false; render(); } });
+function go(v) { S.view = v; S.menu = false; window.scrollTo(0, 0); render(); }
+
+/* ---------- תפריט ראשי ---------- */
+function viewHome() {
+  var h = new Date().getHours();
+  var greet = h < 12 ? 'בוקר טוב' : h < 17 ? 'צהריים טובים' : h < 21 ? 'ערב טוב' : 'לילה טוב';
+  var tiles = TILES.filter(function (t) { return t.admin ? isAdmin() : can(t.key); });
+  $('main').innerHTML =
+    '<div class="hello"><div><h1>' + greet + ', ' + esc(S.user.name) + '</h1><p>במה נטפל היום?</p></div></div>' +
+    '<div class="tiles">' + tiles.map(function (t) {
+      var inner = '<span class="ti" style="--tc:' + t.c + '">' + t.ic + '</span><h3>' + esc(t.name) + '</h3><p>' + esc(t.desc) + '</p>' +
+        (t.soon ? '<span class="tag">בקרוב</span>' : t.ext ? '<span class="ext">↗</span>' : '');
+      if (t.ext) return '<a class="tile" href="' + CRM_URL + '" target="_blank" rel="noopener">' + inner + '</a>';
+      return '<button class="tile' + (t.soon ? ' soon' : '') + '" data-tile="' + t.key + '"' + (t.soon ? ' disabled' : '') + '>' + inner + '</button>';
+    }).join('') + '</div>' +
+    (tiles.length ? '' : '<div class="empty">עוד לא הוגדרו לך מודולים. פנה/י למנהל המערכת.</div>');
+  document.querySelectorAll('[data-tile]').forEach(function (b) { b.onclick = function () { go(b.getAttribute('data-tile')); }; });
+}
+
+/* ---------- דיווחי שעות ---------- */
+function viewHours() {
+  var H = S.hours;
+  $('main').innerHTML =
+    '<div class="bar"><h2>דיווחי שעות</h2>' +
+      '<div class="seg"><button data-ht="month" class="' + (H.tab === 'month' ? 'on' : '') + '">סיכום חודשי</button><button data-ht="staff" class="' + (H.tab === 'staff' ? 'on' : '') + '">צוות וקישורים</button></div>' +
+      '<span class="spacer"></span>' +
+      (H.tab === 'month' ? '<div class="month"><button class="icon" id="mp" title="החודש הקודם">›</button><b>' + monthName(H.month) + '</b><button class="icon" id="mn" title="החודש הבא">‹</button></div>' +
+        '<button class="btn ghost" id="csv">הורדת CSV</button><button class="btn" id="exp">ייצוא לגיליון</button>'
+        : (isAdmin() ? '<button class="btn" id="sadd">+ איש צוות</button>' : '')) +
+    '</div><div id="hb"><div class="loading"><span class="spin"></span> טוען…</div></div>';
+  document.querySelectorAll('[data-ht]').forEach(function (b) { b.onclick = function () { H.tab = b.getAttribute('data-ht'); viewHours(); }; });
+  if (H.tab === 'month') {
+    $('mp').onclick = function () { H.month = shiftMonth(H.month, -1); H.data = null; viewHours(); };
+    $('mn').onclick = function () { H.month = shiftMonth(H.month, 1); H.data = null; viewHours(); };
+    $('csv').onclick = downloadCsv;
+    $('exp').onclick = function () {
+      var b = $('exp'); b.disabled = true; b.innerHTML = '<span class="spin"></span> מייצא…';
+      api('attendance_export', { month: H.month }).then(function (r) {
+        b.disabled = false; b.textContent = 'ייצוא לגיליון';
+        modal('הגיליון מוכן', '<p>נוצר גיליון <b>' + esc(r.name) + '</b> עם סיכום לכל עובד ופירוט משמרות.</p>',
+          '<a class="btn" href="' + esc(r.url) + '" target="_blank" rel="noopener">פתיחת הגיליון</a>');
+      }, function (e) { b.disabled = false; b.textContent = 'ייצוא לגיליון'; toast(errMsg(e), 1); });
+    };
+    if (H.data && H.data.month === H.month) drawMonth(); else loadMonth();
+  } else {
+    if ($('sadd')) $('sadd').onclick = function () { staffModal(null); };
+    if (H.staff) drawStaff(); else loadStaff();
+  }
+}
+function loadMonth() {
+  var H = S.hours, m = H.month;
+  api('attendance_month', { month: m }).then(function (r) { if (H.month !== m) return; H.data = r; if (S.view === 'hours' && H.tab === 'month') drawMonth(); },
+    function (e) { if ($('hb')) $('hb').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
+}
+function drawMonth() {
+  var d = S.hours.data;
+  var total = 0, worked = 0, open = 0, flagged = 0;
+  d.people.forEach(function (p) { total += p.minutes; if (p.minutes || p.open) worked++; if (p.open) open++; flagged += p.flagged; });
+  var people = d.people.slice().sort(function (a, b) { return b.minutes - a.minutes || String(a.name).localeCompare(b.name, 'he'); });
+  $('hb').innerHTML =
+    '<div class="kpis">' +
+      '<div class="kpi hl"><small>סה״כ שעות בחודש</small><b class="num">' + dec(total) + '</b></div>' +
+      '<div class="kpi"><small>עובדים שדיווחו</small><b class="num">' + worked + ' / ' + d.people.length + '</b></div>' +
+      '<div class="kpi' + (open ? ' hl' : '') + '"><small>במשמרת עכשיו</small><b class="num">' + open + '</b></div>' +
+      '<div class="kpi' + (flagged ? ' bad' : '') + '"><small>משמרות לבדיקה</small><b class="num">' + flagged + '</b></div>' +
+    '</div>' +
+    (d.people.length ? '<div class="card"><table><thead><tr><th>שם</th><th class="hide-sm">תפקיד</th><th>ימי עבודה</th><th>שעות</th><th>מצב</th></tr></thead><tbody>' +
+      people.map(function (p) {
+        return '<tr class="r" data-p="' + esc(p.id) + '"><td class="name">' + esc(p.name) + '</td><td class="hide-sm muted">' + esc(p.role || '') + '</td>' +
+          '<td class="num">' + p.days + '</td><td class="num"><b>' + dec(p.minutes) + '</b> <span class="sub">(' + hm(p.minutes) + ')</span></td>' +
+          '<td>' + (p.open ? '<span class="badge on">● במשמרת</span> ' : '') + (p.flagged ? '<span class="badge warn">⚠ ' + p.flagged + ' לבדיקה</span>' : (!p.open ? '<span class="sub">—</span>' : '')) + '</td></tr>';
+      }).join('') + '</tbody></table></div>'
+      : '<div class="card"><div class="empty">אין עדיין אנשי צוות פעילים. הוסיפו אותם בלשונית "צוות וקישורים".</div></div>') +
+    '<p class="hint">לחיצה על עובד פותחת את פירוט המשמרות שלו — שם אפשר לתקן שעות או להוסיף משמרת שנשכחה.</p>';
+  document.querySelectorAll('[data-p]').forEach(function (tr) { tr.onclick = function () { openPerson(tr.getAttribute('data-p')); }; });
+}
+function openPerson(id) {
+  var d = S.hours.data, p = d.people.filter(function (x) { return x.id === id; })[0];
+  if (!p) return;
+  var rows = d.entries.filter(function (e) { return e.staffId === id; }).sort(function (a, b) { return (a.date + a.in) < (b.date + b.in) ? -1 : 1; });
+  closeDrawer();
+  var wrap = document.createElement('div'); wrap.id = 'dr';
+  wrap.innerHTML = '<div class="dim" id="dd"></div><aside class="drawer" role="dialog" aria-label="' + esc(p.name) + '">' +
+    '<div class="dh"><div style="flex:1"><h2>' + esc(p.name) + '</h2><div class="sub">' + monthName(d.month) + ' · ' + p.days + ' ימים · <b>' + dec(p.minutes) + '</b> שעות</div></div><button class="icon" id="dx" aria-label="סגירה">✕</button></div>' +
+    '<div class="db">' +
+      (rows.length ? rows.map(function (r) {
+        return '<div class="shift" data-id="' + esc(r.id) + '"><div><b>' + dow(r.date) + ' ' + dmy(r.date) + '</b></div>' +
+          '<input type="time" value="' + esc(r.in) + '" aria-label="כניסה" data-f="in"><input type="time" value="' + esc(r.out) + '" aria-label="יציאה" data-f="out">' +
+          '<div class="acts"><button class="btn ghost sm" data-save>שמירה</button>' + (isAdmin() ? '<button class="btn danger sm" data-del>מחיקה</button>' : '') + '</div>' +
+          '<div class="meta">' + (r.out ? hm(r.minutes) + ' שעות' : '<span class="badge on">פתוח</span>') + (r.source ? ' · ' + esc(r.source) : '') +
+            (r.autoClosed ? ' · <span class="flag">⚠ נסגר אוטומטית — לבדוק</span>' : '') + (r.note ? ' · ' + esc(r.note) : '') + '</div></div>';
+      }).join('') : '<div class="empty">אין משמרות בחודש הזה</div>') +
+      '<h3 style="font-size:15px;margin:20px 0 10px">הוספת משמרת</h3>' +
+      '<div class="grid2"><div class="f"><label>תאריך</label><input type="date" id="ad" value="' + (d.month === thisMonth() ? isoToday() : d.month + '-01') + '"></div>' +
+      '<div class="f"><label>הערה</label><input id="an" placeholder="למשל: שכחה לדווח"></div>' +
+      '<div class="f"><label>כניסה</label><input type="time" id="ai" value="08:00"></div><div class="f"><label>יציאה</label><input type="time" id="ao" value="16:00"></div></div>' +
+      '<button class="btn" id="aa">הוספה</button>' +
+    '</div></aside>';
+  document.body.appendChild(wrap);
+  $('dd').onclick = closeDrawer; $('dx').onclick = closeDrawer;
+  wrap.querySelectorAll('.shift').forEach(function (row) {
+    var sid = row.getAttribute('data-id');
+    row.querySelector('[data-save]').onclick = function () {
+      var ti = row.querySelector('[data-f=in]').value, to = row.querySelector('[data-f=out]').value;
+      busy(this, api('attendance_fix', { id: sid, in: ti, out: to }), 'עודכן', function () { refreshPerson(id); });
+    };
+    var del = row.querySelector('[data-del]');
+    if (del) del.onclick = function () {
+      if (!confirm('למחוק את המשמרת?')) return;
+      busy(this, api('attendance_delete', { id: sid }), 'נמחק', function () { refreshPerson(id); });
+    };
+  });
+  $('aa').onclick = function () {
+    busy(this, api('attendance_add', { staffId: id, date: $('ad').value, in: $('ai').value, out: $('ao').value, note: $('an').value }), 'המשמרת נוספה', function () { refreshPerson(id); });
+  };
+}
+function refreshPerson(id) {
+  var m = S.hours.month;
+  api('attendance_month', { month: m }).then(function (r) { S.hours.data = r; if (S.view === 'hours' && S.hours.tab === 'month') { drawMonth(); openPerson(id); } }, function (e) { toast(errMsg(e), 1); });
+}
+function closeDrawer() { var w = $('dr'); if (w) w.remove(); }
+function isoToday() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function busy(btn, promise, okMsg, after) {
+  var label = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  promise.then(function () { btn.disabled = false; btn.textContent = label; if (okMsg) toast(okMsg); if (after) after(); },
+    function (e) { btn.disabled = false; btn.textContent = label; toast(errMsg(e), 1); });
+}
+function downloadCsv() {
+  var d = S.hours.data; if (!d) return;
+  var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  var lines = [['שם', 'תפקיד', 'ימי עבודה', 'שעות (עשרוני)', 'שעות', 'משמרות לבדיקה'].join(',')];
+  d.people.forEach(function (p) { lines.push([p.name, p.role, p.days, dec(p.minutes), hm(p.minutes), p.flagged].map(q).join(',')); });
+  lines.push('', ['שם', 'תאריך', 'כניסה', 'יציאה', 'שעות', 'מקור', 'הערה'].join(','));
+  d.entries.slice().sort(function (a, b) { return (a.name + a.date + a.in) < (b.name + b.date + b.in) ? -1 : 1; })
+    .forEach(function (e) { lines.push([e.name, e.date, e.in, e.out || 'פתוח', dec(e.minutes), e.source, e.note].map(q).join(',')); });
+  var blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'שעות-' + d.month + '.csv';
+  document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* צוות */
+function loadStaff() {
+  api('staff_list').then(function (r) { S.hours.staff = r.staff; S.hours.roles = r.roles; if (S.view === 'hours' && S.hours.tab === 'staff') drawStaff(); },
+    function (e) { if ($('hb')) $('hb').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
+}
+function drawStaff() {
+  var st = S.hours.staff.slice().sort(function (a, b) { return (b.active - a.active) || a.name.localeCompare(b.name, 'he'); });
+  $('hb').innerHTML =
+    (isAdmin() ? '<div class="note">לכל איש צוות יש קישור אישי לשעון הנוכחות. שלחו לו אותו בוואטסאפ — הוא פותח בטלפון ולוחץ "התחלתי" / "סיימתי".</div>' : '') +
+    (st.length ? '<div class="card"><table><thead><tr><th>שם</th><th>טלפון</th><th class="hide-sm">תפקיד</th><th>מצב</th>' + (isAdmin() ? '<th></th>' : '') + '</tr></thead><tbody>' +
+      st.map(function (s) {
+        return '<tr class="' + (s.active ? '' : 'off') + '"><td class="name">' + esc(s.name) + '</td><td><span class="ltr">' + esc(s.phone) + '</span></td>' +
+          '<td class="hide-sm">' + esc(s.role) + '</td><td>' + (s.active ? '<span class="badge on">פעיל</span>' : '<span class="badge off">לא פעיל</span>') + '</td>' +
+          (isAdmin() ? '<td><div class="acts">' +
+            (s.active && s.clockUrl ? '<button class="btn ghost sm" data-wa="' + esc(s.id) + '" title="שליחת הקישור בוואטסאפ">💬<span class="hide-sm"> וואטסאפ</span></button><button class="btn ghost sm" data-cp="' + esc(s.id) + '" title="העתקת הקישור האישי">🔗<span class="hide-sm"> העתקת קישור</span></button>' : '') +
+            '<button class="btn ghost sm" data-ed="' + esc(s.id) + '" title="עריכה">✎<span class="hide-sm"> עריכה</span></button></div></td>' : '') + '</tr>';
+      }).join('') + '</tbody></table></div>'
+      : '<div class="card"><div class="empty">עוד אין אנשי צוות.' + (isAdmin() ? ' לחצו "+ איש צוות" כדי להוסיף.' : '') + '</div></div>');
+  var byId = function (id) { return S.hours.staff.filter(function (s) { return s.id === id; })[0]; };
+  document.querySelectorAll('[data-ed]').forEach(function (b) { b.onclick = function () { staffModal(byId(b.getAttribute('data-ed'))); }; });
+  document.querySelectorAll('[data-cp]').forEach(function (b) { b.onclick = function () { copy(byId(b.getAttribute('data-cp')).clockUrl); }; });
+  document.querySelectorAll('[data-wa]').forEach(function (b) {
+    b.onclick = function () {
+      var s = byId(b.getAttribute('data-wa'));
+      var msg = 'היי ' + s.name.split(' ')[0] + ', זה הקישור האישי שלך לדיווח שעות במעוף לחינוך:\n' + s.clockUrl + '\nבתחילת העבודה לוחצים "התחלתי לעבוד" ובסוף "סיימתי". כדאי לשמור את הקישור במסך הבית.';
+      var num = String(s.phone || '').replace(/\D/g, '').replace(/^0/, '972');
+      window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+    };
+  });
+}
+function copy(text) {
+  function fallback() {
+    var t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select();
+    var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} t.remove();
+    if (ok) toast('הקישור הועתק'); else modal('קישור אישי', '<p class="hint">העתיקו את הקישור:</p><input readonly dir="ltr" value="' + esc(text) + '" onclick="this.select()">');
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast('הקישור הועתק'); }, fallback); else fallback();
+}
+function staffModal(s) {
+  var roles = S.hours.roles.length ? S.hours.roles : ['צוות', 'מדריך', 'קבלן משנה', 'מנהל'];
+  modal(s ? 'עריכת איש צוות' : 'איש צוות חדש',
+    '<div class="f"><label>שם מלא</label><input id="sn" value="' + esc(s ? s.name : '') + '"></div>' +
+    '<div class="grid2"><div class="f"><label>טלפון נייד</label><input id="sp" dir="ltr" inputmode="tel" value="' + esc(s ? s.phone : '') + '" placeholder="05X-XXXXXXX"></div>' +
+    '<div class="f"><label>תפקיד</label><select id="sr">' + roles.map(function (r) { return '<option' + (s && s.role === r ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('') + '</select></div></div>' +
+    '<div class="f"><label>הערות</label><input id="so" value="' + esc(s ? s.notes : '') + '"></div>' +
+    '<label class="chk' + (!s || s.active ? ' on' : '') + '" id="sal"><input type="checkbox" id="sa"' + (!s || s.active ? ' checked' : '') + '> פעיל/ה</label>' +
+    '<p class="hint">הטלפון משמש גם לדיווח בוואטסאפ ("התחלתי" / "סיימתי") כשהבוט יעלה.</p>',
+    '<button class="btn" id="ss">שמירה</button>');
+  $('sa').onchange = function () { $('sal').classList.toggle('on', this.checked); };
+  $('ss').onclick = function () {
+    var data = { id: s ? s.id : '', name: $('sn').value.trim(), phone: $('sp').value.trim(), role: $('sr').value, notes: $('so').value.trim(), active: $('sa').checked };
+    busy(this, api('staff_save', { staff: data }).then(function (r) { S.hours.staff = r.staff; closeModal(); drawStaff(); S.hours.data = null; }), s ? 'נשמר' : 'נוסף לצוות');
+  };
+}
+
+/* ---------- משתמשים והרשאות ---------- */
+function viewUsers() {
+  $('main').innerHTML = '<div class="bar"><h2>משתמשים והרשאות</h2><span class="spacer"></span><button class="btn" id="uadd">+ משתמש</button></div><div id="ub2"><div class="loading"><span class="spin"></span> טוען…</div></div>';
+  $('uadd').onclick = function () { userModal(null); };
+  if (S.users) drawUsers();
+  api('users_list').then(function (r) { S.users = r.users; S.mods = r.modules || []; if (S.view === 'users') drawUsers(); }, function (e) { $('ub2').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
+}
+function drawUsers() {
+  var mods = S.mods.length ? S.mods : Object.keys(MOD_NAMES).map(function (k) { return { key: k, name: MOD_NAMES[k] }; });
+  $('ub2').innerHTML = '<div class="note">מנהל/ת רואה את כל המודולים. למשתמש רגיל מסמנים לאילו מודולים יש לו גישה — השינוי נשמר מיד וחל בכניסה הבאה שלו.</div>' +
+    '<div class="card"><table><thead><tr><th>שם</th><th class="hide-sm">שם משתמש</th><th>הרשאות</th><th class="hide-sm">כניסה אחרונה</th><th></th></tr></thead><tbody>' +
+    S.users.map(function (u) {
+      var admin = u.role === 'admin';
+      return '<tr class="' + (u.active ? '' : 'off') + '"><td class="name">' + esc(u.name) + (admin ? ' <span class="badge on">מנהל/ת</span>' : '') + (u.active ? '' : ' <span class="badge off">מושבת</span>') + '</td>' +
+        '<td class="hide-sm"><span class="ltr">' + esc(u.username) + '</span></td><td><div class="acts" style="justify-content:flex-start">' +
+        mods.map(function (m) {
+          var on = admin || (u.modules || []).indexOf(m.key) >= 0;
+          return '<label class="chk' + (on ? ' on' : '') + (admin ? ' lock' : '') + '"><input type="checkbox" data-u="' + esc(u.username) + '" data-m="' + m.key + '"' + (on ? ' checked' : '') + (admin ? ' disabled' : '') + '> ' + esc(m.name) + '</label>';
+        }).join('') + '</div></td>' +
+        '<td class="hide-sm sub">' + (u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('he-IL') : '—') + '</td>' +
+        '<td><button class="btn ghost sm" data-ue="' + esc(u.username) + '">עריכה</button></td></tr>';
+    }).join('') + '</tbody></table></div>';
+  document.querySelectorAll('input[data-m]').forEach(function (cb) {
+    cb.onchange = function () {
+      var u = S.users.filter(function (x) { return x.username === cb.getAttribute('data-u'); })[0];
+      var set = (u.modules || []).filter(function (k) { return k !== cb.getAttribute('data-m'); });
+      if (cb.checked) set.push(cb.getAttribute('data-m'));
+      if (!set.length) { cb.checked = true; return toast('צריך להשאיר לפחות מודול אחד', 1); }
+      cb.parentNode.classList.toggle('on', cb.checked);
+      api('user_save', { user: { username: u.username, name: u.name, role: u.role, active: u.active, modules: set } })
+        .then(function (r) { S.users = r.users; toast('ההרשאות של ' + u.name + ' עודכנו'); }, function (e) { toast(errMsg(e), 1); viewUsers(); });
+    };
+  });
+  document.querySelectorAll('[data-ue]').forEach(function (b) { b.onclick = function () { userModal(S.users.filter(function (x) { return x.username === b.getAttribute('data-ue'); })[0]); }; });
+}
+function userModal(u) {
+  var mods = S.mods.length ? S.mods : Object.keys(MOD_NAMES).map(function (k) { return { key: k, name: MOD_NAMES[k] }; });
+  var cur = u ? (u.modules || []) : ['hours'];
+  modal(u ? 'עריכת משתמש' : 'משתמש חדש',
+    '<div class="grid2"><div class="f"><label>שם תצוגה</label><input id="un" value="' + esc(u ? u.name : '') + '"></div>' +
+    '<div class="f"><label>שם משתמש (אנגלית)</label><input id="uu" dir="ltr" value="' + esc(u ? u.username : '') + '"' + (u ? ' readonly' : '') + ' placeholder="orit"></div></div>' +
+    '<div class="grid2"><div class="f"><label>' + (u ? 'סיסמה חדשה (ריק = ללא שינוי)' : 'סיסמה ראשונית') + '</label><input id="up" dir="ltr" type="text" autocomplete="new-password" placeholder="לפחות 6 תווים"></div>' +
+    '<div class="f"><label>תפקיד</label><select id="ur"><option value="user">משתמש/ת</option><option value="admin"' + (u && u.role === 'admin' ? ' selected' : '') + '>מנהל/ת (גישה מלאה)</option></select></div></div>' +
+    '<div class="f"><label>מודולים</label><div class="acts" style="justify-content:flex-start">' + mods.map(function (m) {
+      var on = cur.indexOf(m.key) >= 0;
+      return '<label class="chk' + (on ? ' on' : '') + '"><input type="checkbox" data-nm="' + m.key + '"' + (on ? ' checked' : '') + '> ' + esc(m.name) + '</label>';
+    }).join('') + '</div></div>' +
+    (u ? '<label class="chk' + (u.active ? ' on' : '') + '" id="ual"><input type="checkbox" id="ua"' + (u.active ? ' checked' : '') + '> פעיל/ה</label>' : ''),
+    '<button class="btn" id="us">שמירה</button>');
+  document.querySelectorAll('[data-nm]').forEach(function (cb) { cb.onchange = function () { cb.parentNode.classList.toggle('on', cb.checked); }; });
+  if ($('ua')) $('ua').onchange = function () { $('ual').classList.toggle('on', this.checked); };
+  $('us').onclick = function () {
+    var set = []; document.querySelectorAll('[data-nm]').forEach(function (cb) { if (cb.checked) set.push(cb.getAttribute('data-nm')); });
+    var data = { username: $('uu').value.trim().toLowerCase(), name: $('un').value.trim(), role: $('ur').value, modules: set, active: u ? $('ua').checked : true };
+    if ($('up').value) data.password = $('up').value;
+    if (!data.name) return toast('חובה שם תצוגה', 1);
+    if (!set.length && data.role !== 'admin') return toast('סמנו לפחות מודול אחד', 1);
+    busy(this, api('user_save', { user: data }).then(function (r) { S.users = r.users; closeModal(); drawUsers(); }), u ? 'נשמר' : 'המשתמש נוצר');
+  };
+}
+function pwModal() {
+  modal('שינוי סיסמה',
+    '<div class="f"><label>סיסמה נוכחית</label><input id="po" type="password" dir="ltr" autocomplete="current-password"></div>' +
+    '<div class="f"><label>סיסמה חדשה</label><input id="pn" type="password" dir="ltr" autocomplete="new-password" placeholder="לפחות 6 תווים"></div>',
+    '<button class="btn" id="ps">שמירה</button>');
+  $('ps').onclick = function () { busy(this, api('change_password', { old: $('po').value, password: $('pn').value }).then(closeModal), 'הסיסמה עודכנה'); };
+}
+
+/* ---------- חומרים ---------- */
+function viewMaterials() {
+  $('main').innerHTML = '<div class="bar"><h2>חומרים</h2></div><div id="mb2"><div class="loading"><span class="spin"></span> טוען…</div></div>';
+  api('materials_list').then(function (r) {
+    S.mats = r.items;
+    var cats = {}; r.items.forEach(function (m) { (cats[m.cat || 'כללי'] = cats[m.cat || 'כללי'] || []).push(m); });
+    var icon = function (u) { return /docs\.google\.com\/presentation/.test(u) ? '📊' : /docs\.google\.com\/spreadsheets/.test(u) ? '📈' : /docs\.google\.com\/document/.test(u) ? '📄' : /drive\.google\.com\/drive\/folders/.test(u) ? '📁' : /\.pdf($|\?)/i.test(u) ? '📕' : '🔗'; };
+    $('mb2').innerHTML = (isAdmin() ? '<div class="note">מוסיפים חומר בגיליון "חומרים" (שם · קישור · קטגוריה · תיאור). הוא יופיע כאן אוטומטית.</div>' : '') +
+      (r.items.length ? Object.keys(cats).map(function (c) {
+        return '<div class="cat">' + esc(c) + '</div><div class="mats">' + cats[c].map(function (m) {
+          return '<a class="mat" href="' + esc(m.url) + '" target="_blank" rel="noopener"><span class="mi">' + icon(m.url) + '</span><span><b>' + esc(m.name) + '</b>' + (m.desc ? '<span class="sub">' + esc(m.desc) + '</span>' : '') + '</span></a>';
+        }).join('') + '</div>';
+      }).join('') : '<div class="card"><div class="empty">עוד לא נוספו חומרים.</div></div>');
+  }, function (e) { $('mb2').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
+}
+
+/* ---------- חלון ---------- */
+function modal(title, body, foot) {
+  closeModal();
+  var w = document.createElement('div'); w.className = 'modal-wrap'; w.id = 'md';
+  w.innerHTML = '<div class="modal" role="dialog" aria-label="' + esc(title) + '"><div class="mh"><h3>' + esc(title) + '</h3><button class="icon" id="mx" aria-label="סגירה">✕</button></div>' +
+    '<div class="mb">' + body + '</div><div class="mf">' + (foot || '') + '<button class="btn ghost" id="mc">' + (foot ? 'ביטול' : 'סגירה') + '</button></div></div>';
+  document.body.appendChild(w);
+  w.onclick = function (e) { if (e.target === w) closeModal(); };
+  $('mx').onclick = closeModal; $('mc').onclick = closeModal;
+  var first = w.querySelector('input:not([readonly]),select'); if (first) setTimeout(function () { first.focus(); }, 30);
+}
+function closeModal() { var w = $('md'); if (w) w.remove(); }
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeDrawer(); } });
+
+/* ---------- התחלה ---------- */
+(function init() {
+  try { var q = new URLSearchParams(location.search); if (q.get('api')) API_URL = q.get('api'); } catch (e) {}
+  render();
+  if (S.token) api('me').then(function (r) { S.user = r.user; LS.set('user', r.user); if (S.view === 'home') render(); }).catch(function () {});
+})();
+})();
+</script>
+</body>
+</html>

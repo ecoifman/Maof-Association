@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="מעוף שעון">
+<title>מעוף — שעון נוכחות</title>
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal:#0f766e; --teal-dark:#115e59; --teal-soft:#ccfbf1; --coral:#f97362; --coral-soft:#ffe4df;
+    --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f6f7f8; --card:#fff; --ok:#16a34a;
+    --r:16px; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(15,118,110,.08);
+  }
+  *{box-sizing:border-box} html,body{margin:0} [hidden]{display:none!important}
+  body{font-family:Heebo,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45}
+  header{background:var(--teal);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 14px}
+  header h1{font-size:18px;margin:0} header .sub{font-size:14px;opacity:.85}
+  main{padding:16px;max-width:480px;margin:0 auto}
+  .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+  .state{text-align:center}
+  .state .label{font-size:15px;color:var(--muted)}
+  .state .timer{font-size:46px;font-weight:700;color:var(--teal-dark);letter-spacing:1px;font-variant-numeric:tabular-nums;margin:4px 0}
+  .state .since{font-size:14px;color:var(--muted)}
+  .big{display:block;width:100%;border:0;border-radius:20px;padding:26px 16px;font:inherit;font-size:24px;font-weight:700;cursor:pointer;color:#fff;margin-top:14px}
+  .big.in{background:var(--teal)} .big.out{background:var(--coral)} .big:disabled{opacity:.55}
+  input{width:100%;font:inherit;font-size:16px;padding:12px;border:1.5px solid var(--line);border-radius:12px;margin-top:12px}
+  input:focus{outline:none;border-color:var(--teal)}
+  .stat{display:flex;gap:10px}
+  .stat > div{flex:1;background:var(--teal-soft);border-radius:12px;padding:12px;text-align:center}
+  .stat b{display:block;font-size:24px;color:var(--teal-dark)} .stat span{font-size:13px;color:var(--teal-dark)}
+  h2{font-size:16px;margin:0 0 10px}
+  .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .row:last-child{border-bottom:0} .row .h{color:var(--muted)}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:6px 0}
+  .msg{border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px}
+  .msg.ok{background:#dcfce7;color:#166534} .msg.err{background:var(--coral-soft);color:#b91c1c}
+  .muted{color:var(--muted);font-size:13px;text-align:center;margin-top:18px}
+  a.link{color:var(--teal-dark)}
+</style>
+</head>
+<body>
+<header>
+  <h1>שעון נוכחות · מעוף לחינוך</h1>
+  <div class="sub" id="who">טוען…</div>
+</header>
+<main>
+  <div id="msg" class="msg" hidden></div>
+
+  <div id="noToken" class="card" hidden>
+    <h2>חסר קישור אישי</h2>
+    <p>כדי לדווח שעות צריך להיכנס מהקישור האישי שקיבלת מהעמותה. אם אין לך קישור, פנה/י לאייל.</p>
+  </div>
+
+  <div id="app" hidden>
+    <div class="card state">
+      <div class="label" id="stLabel">לא במשמרת</div>
+      <div class="timer" id="timer">00:00</div>
+      <div class="since" id="since">&nbsp;</div>
+      <input id="note" maxlength="200" placeholder="הערה (לא חובה) — למשל: משרד / פגישה במועצה">
+      <button class="big in" id="btnIn" onclick="act('clk_in')">▶ התחלתי לעבוד</button>
+      <button class="big out" id="btnOut" onclick="act('clk_out')" hidden>■ סיימתי לעבוד</button>
+    </div>
+
+    <div class="card">
+      <div class="stat">
+        <div><b id="todayH">0:00</b><span>היום</span></div>
+        <div><b id="monthH">0:00</b><span>החודש</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>המשמרות של היום</h2>
+      <div id="todayList"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="monthTitle">החודש</h2>
+      <div id="monthList"><div class="empty"><a class="link" href="#" onclick="loadMonth();return false">הצג את כל החודש</a></div></div>
+    </div>
+
+    <div class="muted">שכחת לסגור משמרת? היא תיסגר אוטומטית אחרי 14 שעות ותסומן לבדיקה של המנהל.</div>
+  </div>
+</main>
+
+<script>
+// הטוקן מוזרק כאן כשהדף מוגש מה-Apps Script (Clock.gs → clkPage_). הערות JS נמחקות בהגשה, לכן זה מחרוזת ולא הערה.
+var CLK_INJECTED = '%%CLK_TOKEN%%';
+// כתובת ה-Web App של ה-Apps Script — אותה כתובת של אפליקציית הדיווחים (app/index.html)
+var API_URL = 'https://script.google.com/macros/s/AKfycbwTm9c5HPEDwkrHTjZs1ge1SSTdgYDT_7JwNFS361rQENnLscxjyaT5Z6YMe3scof_MFA/exec';
+
+var S = { token:null, open:null, offsetMs:0, busy:false };
+var $ = function(id){ return document.getElementById(id); };
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
+function api(action, data, cb){
+  data = data || {}; data.action = action; data.token = S.token;
+  // מוגש מתוך ה-Apps Script (?page=clock) — קריאה ישירה לשרת, בלי CORS ובלי כתובת
+  if (window.google && google.script && google.script.run) {
+    google.script.run.withSuccessHandler(function(out){ cb(null, out); })
+      .withFailureHandler(function(e){ cb('שגיאה: ' + (e && e.message || e)); }).clkApi(JSON.stringify(data));
+    return;
+  }
+  var x = new XMLHttpRequest();
+  x.open('POST', API_URL, true);
+  x.setRequestHeader('Content-Type','text/plain;charset=utf-8');
+  x.timeout = 30000;
+  x.onreadystatechange = function(){
+    if (x.readyState !== 4) return;
+    var out = null; try { out = JSON.parse(x.responseText); } catch(e){}
+    if (x.status === 200 && out) cb(null, out); else cb(x.status === 0 ? 'אין חיבור לאינטרנט' : 'שגיאה ' + x.status);
+  };
+  x.ontimeout = function(){ cb('השרת לא ענה — נסה/י שוב'); };
+  x.send(JSON.stringify(data));
+}
+
+function hm(min){ min = Math.max(0, Math.round(min || 0)); return Math.floor(min/60) + ':' + ('0' + (min % 60)).slice(-2); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function flash(text, ok){ var m = $('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); m.hidden = false; setTimeout(function(){ m.hidden = true; }, ok ? 4000 : 8000); }
+
+var ERR = {
+  auth: 'הקישור לא תקין או שהמשתמש לא פעיל. פנה/י לאייל לקבלת קישור חדש.',
+  already_in: 'כבר רשום/ה במשמרת פתוחה.',
+  not_in: 'אין משמרת פתוחה — לחץ/י קודם "התחלתי לעבוד".'
+};
+
+function render(st){
+  $('who').textContent = 'שלום ' + st.staff.name;
+  S.open = st.open;
+  // היסט שעון: השעה בשרת מול השעה בטלפון, כדי שהטיימר יהיה מדויק
+  if (st.serverTime) {
+    var n = new Date(), p = st.serverTime.split(':');
+    var server = new Date(n.getFullYear(), n.getMonth(), n.getDate(), +p[0], +p[1]);
+    S.offsetMs = server - new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), n.getMinutes());
+  }
+  $('btnIn').hidden = !!st.open; $('btnOut').hidden = !st.open;
+  $('stLabel').textContent = st.open ? 'במשמרת' : 'לא במשמרת';
+  $('since').innerHTML = st.open ? 'התחלת ב-' + esc(st.open.in) + (st.open.date !== today() ? ' (' + esc(st.open.date) + ')' : '') : '&nbsp;';
+  var todayMin = (st.today || []).reduce(function(t, r){ return t + r.minutes; }, 0);
+  $('todayH').textContent = hm(todayMin + (st.open ? liveMin() : 0));
+  $('monthH').textContent = hm((st.monthMinutes || 0) + (st.open ? liveMin() : 0));
+  var rows = (st.today || []).map(function(r){
+    return '<div class="row"><span>' + esc(r.in) + ' – ' + (r.out ? esc(r.out) : '<b>פתוח</b>') + (r.note ? ' · <span class="h">' + esc(r.note) + '</span>' : '') +
+           '</span><span class="h">' + (r.out ? hm(r.minutes) : '') + (r.autoClosed ? ' ⚠' : '') + '</span></div>';
+  }).join('');
+  $('todayList').innerHTML = rows || '<div class="empty">עוד לא היו משמרות היום</div>';
+  tick();
+}
+
+function today(){ var d = new Date(Date.now() + S.offsetMs); return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2); }
+function liveMin(){
+  if (!S.open) return 0;
+  var p = S.open.date.split('-'), t = S.open.in.split(':');
+  var start = new Date(+p[0], +p[1]-1, +p[2], +t[0], +t[1]);
+  return Math.max(0, (Date.now() + S.offsetMs - start) / 60000);
+}
+function tick(){
+  if (!S.open) { $('timer').textContent = '00:00'; return; }
+  var m = liveMin(), h = Math.floor(m / 60), mm = Math.floor(m % 60);
+  $('timer').textContent = ('0' + h).slice(-2) + ':' + ('0' + mm).slice(-2);
+}
+setInterval(tick, 15000);
+
+function load(){
+  api('clk_status', {}, function(err, out){
+    if (err) return flash(err);
+    if (!out.ok) { if (out.error === 'auth') { $('app').hidden = true; $('noToken').hidden = false; } return flash(ERR[out.error] || out.error); }
+    $('app').hidden = false; render(out);
+  });
+}
+
+function act(action){
+  if (S.busy) return; S.busy = true;
+  $('btnIn').disabled = $('btnOut').disabled = true;
+  api(action, { note: $('note').value }, function(err, out){
+    S.busy = false; $('btnIn').disabled = $('btnOut').disabled = false;
+    if (err) return flash(err);
+    if (!out.ok) { flash(out.message || ERR[out.error] || out.error); return load(); }
+    $('note').value = '';
+    render(out);
+    flash(action === 'clk_in' ? 'נרשם: התחלת לעבוד ב-' + out.open.in : 'נרשם: סיימת. עבדת ' + hm(out.lastMinutes) + ' שעות.', true);
+    if (!$('monthList').querySelector('.empty')) loadMonth();
+  });
+}
+
+function loadMonth(){
+  api('clk_month', {}, function(err, out){
+    if (err || !out.ok) return flash(err || ERR[out.error] || out.error);
+    $('monthTitle').textContent = 'החודש · ' + hm(out.totalMinutes) + ' שעות';
+    var rows = out.entries.slice().reverse().map(function(r){
+      return '<div class="row"><span>' + esc(r.date.slice(8) + '/' + r.date.slice(5, 7)) + ' · ' + esc(r.in) + '–' + (r.out ? esc(r.out) : 'פתוח') +
+             '</span><span class="h">' + hm(r.minutes) + (r.autoClosed ? ' ⚠' : '') + '</span></div>';
+    }).join('');
+    $('monthList').innerHTML = rows || '<div class="empty">אין משמרות החודש</div>';
+  });
+}
+
+(function init(){
+  var q = new URLSearchParams(location.search);
+  if (q.get('api')) API_URL = q.get('api');
+  var t = (CLK_INJECTED.indexOf('%%') === 0 ? '' : CLK_INJECTED) || q.get('t');
+  if (t) { lsSet('clk_token', t); try { if (q.get('t')) history.replaceState(null, '', location.pathname); } catch(e){} }   // הטוקן לא נשאר בשורת הכתובת
+  S.token = t || lsGet('clk_token');
+  if (!S.token) { $('who').textContent = ''; $('noToken').hidden = false; return; }
+  load();
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) load(); });
+})();
+</script>
+</body>
+</html>
