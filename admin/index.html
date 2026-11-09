@@ -251,7 +251,7 @@ function renderLogin(msg) {
     $('lb').disabled = true; $('lb').innerHTML = '<span class="spin"></span>'; $('le').textContent = '';
     api('login', { username: $('lu').value.trim(), password: $('lp').value }).then(function (r) {
       S.token = r.token; S.user = r.user; LS.set('token', r.token); LS.set('user', r.user);
-      S.view = 'home'; render();
+      S.view = S.quotes.deepLead ? 'quotes' : 'home'; render();
     }, function (e) { $('lb').disabled = false; $('lb').textContent = 'כניסה'; $('le').textContent = errMsg(e); });
   };
   setTimeout(function () { var u = $('lu'); if (u) u.focus(); }, 50);
@@ -601,6 +601,10 @@ function viewQuotes() {
   Promise.all(need).then(function () {
     if (S.view !== 'quotes') return;
     if (Qs.tab === 'list') drawQuotes(); else if (Qs.tab === 'fu') drawFollowups(); else drawPrices();
+    if (Qs.deepLead) {
+      var id = Qs.deepLead; Qs.deepLead = null;
+      api('list').then(function (r) { Qs.leads = r.leads; var l = r.leads.filter(function (x) { return x.id === id; })[0]; if (l) newQuote(l); else toast('הליד לא נמצא', 1); }, function (e) { toast(errMsg(e), 1); });
+    }
   }, function (e) { if ($('qb')) $('qb').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
 }
 function reloadQuotes(after) { api('quote_list').then(function (r) { S.quotes.list = r.quotes; if (after) after(); }, function (e) { toast(errMsg(e), 1); }); }
@@ -765,6 +769,8 @@ document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { cl
 /* ---------- התחלה ---------- */
 (function init() {
   try { var q = new URLSearchParams(location.search); if (q.get('api')) API_URL = q.get('api'); } catch (e) {}
+  // קישור עמוק מהווידג'ט: ?quote=<מזהה ליד> פותח ישר טופס הצעת מחיר לליד הזה (אחרי כניסה)
+  try { var qq = new URLSearchParams(location.search).get('quote'); if (qq) { S.view = 'quotes'; S.quotes.deepLead = qq; history.replaceState(null, '', location.pathname); } } catch (e) {}
   render();
   if (S.token) api('me').then(function (r) { S.user = r.user; LS.set('user', r.user); if (S.view === 'home') render(); }).catch(function () {});
 })();
