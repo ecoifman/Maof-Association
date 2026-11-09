@@ -117,7 +117,7 @@ tr.off td{color:var(--muted)}
 .shift .meta{grid-column:1/-1;font-size:12px;color:var(--muted);margin-top:-4px}
 .flag{color:var(--warn);font-weight:700}
 .modal-wrap{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,31,46,.35);animation:fade .15s}
-.modal{background:#fff;border-radius:16px;width:100%;max-width:460px;max-height:calc(100% - 32px);overflow:auto;box-shadow:0 24px 64px rgba(15,31,46,.25)}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:calc(100% - 32px);overflow:auto;box-shadow:0 24px 64px rgba(15,31,46,.25)}
 .mh{padding:18px 20px 6px;display:flex;align-items:center;gap:8px}
 .mh h3{font-size:17px;flex:1}
 .mb{padding:8px 20px}
@@ -743,13 +743,49 @@ function drawFollowups() {
   }, function (e) { $('qb').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
 }
 function drawPrices() {
-  var cat = S.quotes.cat, t = cat.terms;
-  $('qb').innerHTML = (isAdmin() ? '<div class="note" style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px;color:var(--muted);font-size:13px">עורכים בגיליון: לשונית "מחירון" (מק"ט · שם · תיאור · מחיר · יחידה · פעיל · סדר) ולשונית "תנאים". השינויים נכנסים להצעה הבאה.</div>' : '') +
-    '<div class="card" style="margin-bottom:14px"><table><thead><tr><th>מק"ט</th><th>פריט</th><th class="hide-sm">תיאור</th><th>מחיר</th><th>יחידה</th></tr></thead><tbody>' +
-    cat.items.map(function (i) { return '<tr><td class="num">' + esc(i.code) + '</td><td class="name">' + esc(i.name) + '</td><td class="hide-sm sub">' + esc(i.desc) + '</td><td class="num nw">' + ils(i.price) + '</td><td>' + esc(i.unit) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
-    '<div class="card" style="padding:14px 16px"><h3 style="font-size:15px;margin-bottom:10px">תנאים שמודפסים בהצעה</h3><ul class="dl">' +
-    [['תוקף', (t['תוקף_ימים'] || '30') + ' ימים'], ['תשלום', t['תנאי_תשלום']], ['מע"מ', t['מעמ']], ['תנאים כלליים', t['תנאים_כלליים']], ['פולו-אפ', 'ימים ' + (t['פולואפ_ימים'] || '2,5,10') + ' אחרי השליחה · מייל ל-' + (t['פולואפ_נמענים'] || '')]]
-      .map(function (p) { return '<li><span class="sub nw">' + p[0] + '</span><span style="white-space:pre-wrap;text-align:right;flex:1;margin-right:12px">' + esc(p[1] || '') + '</span></li>'; }).join('') + '</ul></div>';
+  var cat = S.quotes.cat, t = cat.terms, adm = isAdmin();
+  var TERMS = [['תוקף_ימים', 'תוקף ההצעה (ימים)', 1], ['תנאי_תשלום', 'תנאי תשלום (מודפס בהצעה)', 1], ['מעמ', 'שורת מע"מ (מודפסת מתחת לסה"כ)', 1], ['חתימה', 'חתימה (במייל)', 1],
+               ['תנאים_כלליים', 'תנאים כלליים — עמוד "פרטים" כשלפריט אין תנאים משלו', 8], ['פולואפ_ימים', 'פולו-אפ: ימים אחרי השליחה (למשל 2,5,10)', 1], ['פולואפ_נמענים', 'מייל הפולו-אפ היומי נשלח אל', 1],
+               ['סטטוס_ליד_נשלחה', 'סטטוס הליד אחרי שליחת הצעה ("-" = לא לשנות)', 1], ['סטטוס_ליד_אושרה', 'סטטוס הליד כשההצעה אושרה ("-" = לא לשנות)', 1]];
+  $('qb').innerHTML =
+    '<div class="bar" style="margin-bottom:8px"><h3 style="font-size:16px">פריטים במחירון</h3><span class="spacer"></span>' + (adm ? '<button class="btn sm" id="padd">+ פריט</button>' : '') + '</div>' +
+    '<div class="card" style="margin-bottom:18px"><table><thead><tr><th>מק"ט</th><th>פריט</th><th class="hide-sm">תיאור</th><th>מחיר</th><th>יחידה</th><th class="hide-sm">תנאים</th>' + (adm ? '<th></th>' : '') + '</tr></thead><tbody>' +
+    cat.items.map(function (i) {
+      return '<tr><td class="num">' + esc(i.code) + '</td><td class="name">' + esc(i.name) + '</td><td class="hide-sm sub">' + esc(i.desc) + '</td><td class="num nw">' + ils(i.price) + '</td><td>' + esc(i.unit) + '</td>' +
+        '<td class="hide-sm">' + (i.terms ? '<span class="badge on">יש</span>' : '<span class="badge off">כלליים</span>') + '</td>' +
+        (adm ? '<td><div class="acts"><button class="btn ghost sm" data-pe="' + esc(i.code) + '">✎ עריכה</button></div></td>' : '') + '</tr>';
+    }).join('') + (cat.items.length ? '' : '<tr><td colspan="7" class="empty">אין פריטים</td></tr>') + '</tbody></table></div>' +
+    '<div class="bar" style="margin-bottom:8px"><h3 style="font-size:16px">תנאים והגדרות</h3><span class="spacer"></span>' + (adm ? '<button class="btn sm" id="tsave">שמירת התנאים</button>' : '') + '</div>' +
+    '<div class="card" style="padding:14px 16px">' + TERMS.map(function (x) {
+      var v = t[x[0]] || '';
+      return '<div class="f"><label>' + esc(x[1]) + '</label>' + (x[2] > 1 ? '<textarea data-t="' + x[0] + '" rows="' + x[2] + '"' + (adm ? '' : ' readonly') + '>' + esc(v) + '</textarea>' : '<input data-t="' + x[0] + '" value="' + esc(v) + '"' + (adm ? '' : ' readonly') + '>') + '</div>';
+    }).join('') + '<div class="hint">בתנאים אפשר להשתמש ב-## לכותרת, **טקסט** למודגש, ושורה שמתחילה ב"- " לנקודה.</div></div>';
+  if (!adm) return;
+  $('padd').onclick = function () { priceModal(null); };
+  document.querySelectorAll('[data-pe]').forEach(function (b) { b.onclick = function () { priceModal(cat.items.filter(function (i) { return i.code === b.getAttribute('data-pe'); })[0]); }; });
+  $('tsave').onclick = function () {
+    var terms = {}; document.querySelectorAll('[data-t]').forEach(function (el) { terms[el.getAttribute('data-t')] = el.value; });
+    busy(this, api('quote_terms_save', { terms: terms }), 'התנאים נשמרו', function () { S.quotes.cat = null; viewQuotes(); });
+  };
+}
+function priceModal(it) {
+  var isNew = !it; it = it || { code: '', name: '', desc: '', price: '', unit: 'יח׳', order: 99, terms: '' };
+  modal(isNew ? 'פריט חדש במחירון' : 'עריכת פריט',
+    '<div class="grid2"><div class="f"><label>מק"ט *</label><input id="pc" value="' + esc(it.code) + '"' + (isNew ? '' : ' readonly') + '></div><div class="f"><label>מחיר (₪, ללא מע"מ) *</label><input id="pp" type="number" min="0" value="' + esc(it.price) + '"></div></div>' +
+    '<div class="f"><label>שם הפריט *</label><input id="pn" value="' + esc(it.name) + '"></div>' +
+    '<div class="f"><label>תיאור קצר (מודפס מתחת לשם)</label><input id="pd" value="' + esc(it.desc) + '"></div>' +
+    '<div class="grid2"><div class="f"><label>יחידה</label><input id="pu" value="' + esc(it.unit) + '" placeholder="יריד / שעה / תלמיד"></div><div class="f"><label>סדר תצוגה</label><input id="po" type="number" value="' + esc(it.order) + '"></div></div>' +
+    '<div class="f"><label>תנאים לפריט (עמוד "פרטים" בהצעה; ריק = התנאים הכלליים)</label><textarea id="pt" rows="8" style="font-size:12.5px">' + esc(it.terms || '') + '</textarea></div>',
+    '<button class="btn" id="psave">שמירה</button>' + (isNew ? '' : '<button class="btn danger" id="pdel">מחיקה</button>'));
+  $('psave').onclick = function () {
+    var item = { code: $('pc').value.trim(), name: $('pn').value.trim(), desc: $('pd').value.trim(), price: Number($('pp').value) || 0, unit: $('pu').value.trim(), order: Number($('po').value) || 99, terms: $('pt').value, active: true };
+    if (!item.code || !item.name) return toast('חסרים מק"ט ושם', 1);
+    busy(this, api('quote_price_save', { item: item }), 'הפריט נשמר', function () { closeModal(); S.quotes.cat = null; viewQuotes(); });
+  };
+  if ($('pdel')) $('pdel').onclick = function () {
+    if (!confirm('למחוק את הפריט "' + it.name + '" מהמחירון? (הצעות קיימות לא משתנות)')) return;
+    busy(this, api('quote_price_delete', { code: it.code }), 'נמחק', function () { closeModal(); S.quotes.cat = null; viewQuotes(); });
+  };
 }
 
 /* ---------- חלון ---------- */
