@@ -216,8 +216,17 @@ var ERRS = { forbidden: 'אין לך הרשאה לפעולה הזו', bad_login:
 function errMsg(e) { var s = (e && (e.error || e.message)) || String(e); return ERRS[s] || s; }
 
 /* ---------- תקשורת ---------- */
+// יומן קריאות לאבחון: כל קריאה נרשמת עם זמן ותוצאה; מוצג דרך diagModal() כשיש תקלה
+var DIAG = [];
+function diag(action, status, ms, extra) { DIAG.unshift({ t: new Date().toLocaleTimeString('he-IL'), action: action, status: status, ms: ms, extra: extra || '' }); if (DIAG.length > 40) DIAG.pop(); }
+function diagModal() {
+  modal('אבחון תקשורת', '<div class="hint" style="margin-bottom:8px">כתובת השרת: <span class="ltr" style="font-size:11px;word-break:break-all">' + esc(API_URL) + '</span></div>' +
+    '<table><thead><tr><th>שעה</th><th>פעולה</th><th>תוצאה</th><th>משך</th></tr></thead><tbody>' +
+    DIAG.map(function (d) { return '<tr><td class="nw">' + d.t + '</td><td class="ltr">' + esc(d.action) + '</td><td>' + esc(d.status) + (d.extra ? '<div class="sub ltr" style="font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis">' + esc(d.extra) + '</div>' : '') + '</td><td class="num nw">' + (d.ms != null ? d.ms + 'ms' : '') + '</td></tr>'; }).join('') + '</tbody></table>');
+}
 function api(action, data) {
   var body = Object.assign({ action: action, token: S.token }, data || {});
+  var t0 = Date.now();
   return new Promise(function (resolve, reject) {
     function done(r) {
       if (!r) return reject(new Error('תשובה ריקה מהשרת'));
@@ -229,12 +238,31 @@ function api(action, data) {
       google.script.run.withSuccessHandler(done).withFailureHandler(function (e) { reject(new Error(e && e.message || 'שגיאת שרת')); }).hubApi(JSON.stringify(body));
       return;
     }
-    var x = new XMLHttpRequest();
-    x.open('POST', API_URL); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); x.timeout = action === 'quote_create' ? 240000 : 60000;
-    x.onload = function () { var r; try { r = JSON.parse(x.responseText); } catch (e) { return reject(new Error('תשובה לא תקינה מהשרת')); } done(r); };
-    x.onerror = function () { reject(new Error('אין חיבור לשרת')); };
-    x.ontimeout = function () { reject(new Error('השרת לא הגיב')); };
-    x.send(JSON.stringify(body));
+    var limit = action === 'quote_create' ? 240000 : 45000, payload = JSON.stringify(body);
+    // ניסיון 1: fetch (עוקב אחרי ה-redirect של Apps Script); אם אין fetch או שנכשל ברשת — XHR
+    function viaXhr() {
+      var x = new XMLHttpRequest();
+      x.open('POST', API_URL); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); x.timeout = limit;
+      x.onload = function () { var r; try { r = JSON.parse(x.responseText); } catch (e) { diag(action, 'xhr bad json ' + x.status, Date.now() - t0, x.responseText.slice(0, 120)); return reject(new Error('תשובה לא תקינה מהשרת')); } diag(action, 'xhr ok ' + x.status, Date.now() - t0); done(r); };
+      x.onerror = function () { diag(action, 'xhr network error', Date.now() - t0); reject(new Error('אין חיבור לשרת')); };
+      x.ontimeout = function () { diag(action, 'xhr timeout', Date.now() - t0); reject(new Error('השרת לא הגיב')); };
+      x.send(payload);
+    }
+    if (!window.fetch || !window.AbortController) return viaXhr();
+    var ctrl = new AbortController(), timer = setTimeout(function () { ctrl.abort(); }, limit);
+    fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: payload, redirect: 'follow', signal: ctrl.signal, cache: 'no-store' })
+      .then(function (res) { return res.text().then(function (txt) { return { status: res.status, txt: txt, url: res.url }; }); })
+      .then(function (o) {
+        clearTimeout(timer);
+        var r; try { r = JSON.parse(o.txt); } catch (e) { diag(action, 'fetch bad json ' + o.status, Date.now() - t0, o.txt.slice(0, 120)); return reject(new Error('תשובה לא תקינה מהשרת')); }
+        diag(action, 'fetch ok ' + o.status, Date.now() - t0); done(r);
+      })
+      .catch(function (e) {
+        clearTimeout(timer);
+        if (e && e.name === 'AbortError') { diag(action, 'fetch timeout', Date.now() - t0); return reject(new Error('השרת לא הגיב')); }
+        diag(action, 'fetch failed → xhr', Date.now() - t0, String(e && e.message || e));
+        viaXhr();
+      });
   });
 }
 
@@ -605,7 +633,7 @@ function viewQuotes() {
       var id = Qs.deepLead; Qs.deepLead = null;
       api('list').then(function (r) { Qs.leads = r.leads; var l = r.leads.filter(function (x) { return x.id === id; })[0]; if (l) newQuote(l); else toast('הליד לא נמצא', 1); }, function (e) { toast(errMsg(e), 1); });
     }
-  }, function (e) { if ($('qb')) $('qb').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
+  }, function (e) { if ($('qb')) { $('qb').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '<br><br><button class="btn ghost sm" id="qdiag">אבחון</button> <button class="btn sm" id="qretry">ניסיון חוזר</button></div>'; $('qdiag').onclick = diagModal; $('qretry').onclick = function () { S.quotes.cat = null; S.quotes.list = null; viewQuotes(); }; } });
 }
 function reloadQuotes(after) { api('quote_list').then(function (r) { S.quotes.list = r.quotes; if (after) after(); }, function (e) { toast(errMsg(e), 1); }); }
 function drawQuotes() {
@@ -800,7 +828,7 @@ function modal(title, body, foot) {
   var first = w.querySelector('input:not([readonly]),select'); if (first) setTimeout(function () { first.focus(); }, 30);
 }
 function closeModal() { var w = $('md'); if (w) w.remove(); }
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeDrawer(); } });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeDrawer(); } if (e.altKey && (e.key === 'd' || e.key === 'D')) diagModal(); });
 
 /* ---------- התחלה ---------- */
 (function init() {
