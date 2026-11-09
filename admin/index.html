@@ -224,7 +224,15 @@ function diagModal() {
     '<table><thead><tr><th>שעה</th><th>פעולה</th><th>תוצאה</th><th>משך</th></tr></thead><tbody>' +
     DIAG.map(function (d) { return '<tr><td class="nw">' + d.t + '</td><td class="ltr">' + esc(d.action) + '</td><td>' + esc(d.status) + (d.extra ? '<div class="sub ltr" style="font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis">' + esc(d.extra) + '</div>' : '') + '</td><td class="num nw">' + (d.ms != null ? d.ms + 'ms' : '') + '</td></tr>'; }).join('') + '</tbody></table>');
 }
+// הקריאות לשרת יוצאות אחת אחרי השנייה (Apps Script נופל לפעמים כשמגיעות כמה במקביל), ועם ניסיון חוזר אחד אם אין תשובה
+var API_Q = Promise.resolve();
 function api(action, data) {
+  var run = function () { return apiOnce(action, data).catch(function (e) { if (e && e.message === 'השרת לא הגיב' && action !== 'quote_create') { diag(action, 'retry'); return apiOnce(action, data); } throw e; }); };
+  var p = API_Q.then(run, run);
+  API_Q = p.catch(function () {});
+  return p;
+}
+function apiOnce(action, data) {
   var body = Object.assign({ action: action, token: S.token }, data || {});
   var t0 = Date.now();
   return new Promise(function (resolve, reject) {
@@ -238,7 +246,7 @@ function api(action, data) {
       google.script.run.withSuccessHandler(done).withFailureHandler(function (e) { reject(new Error(e && e.message || 'שגיאת שרת')); }).hubApi(JSON.stringify(body));
       return;
     }
-    var limit = action === 'quote_create' ? 240000 : 45000, payload = JSON.stringify(body);
+    var limit = action === 'quote_create' ? 240000 : 20000, payload = JSON.stringify(body);
     // ניסיון 1: fetch (עוקב אחרי ה-redirect של Apps Script); אם אין fetch או שנכשל ברשת — XHR
     function viaXhr() {
       var x = new XMLHttpRequest();
