@@ -751,7 +751,7 @@ function newQuote(lead) {
       var b = this; b.disabled = true; b.innerHTML = '<span class="spin"></span> יוצר PDF… (עד דקה)';
       api('quote_create', payload).then(function (r) {
         closeDrawer(); reloadQuotes(function () { if (S.view === 'quotes') drawQuotes(); });
-        modal('ההצעה נוצרה — ' + r.quote.number, '<p>הקובץ נשמר ב-Drive' + (payload.leadId ? ' ובתיקיית הליד' : '') + (r.emailSent ? ', ונשלח במייל ל-' + esc(payload.email) : r.emailError ? '. <span class="flag">המייל לא נשלח: ' + esc(r.emailError) + '</span>' : '') + '.</p>' +
+        modal('ההצעה נוצרה — ' + r.quote.number, '<p>הקובץ נשמר ב-Drive' + (payload.leadId ? ' (ויועתק לתיקיית הליד תוך דקה)' : '') + (r.emailSent ? ', ונשלח במייל ל-' + esc(payload.email) : r.emailQueued ? '. המייל ל-' + esc(payload.email) + ' יישלח תוך דקה' : r.emailError ? '. <span class="flag">המייל לא נשלח: ' + esc(r.emailError) + '</span>' : '') + '.</p>' +
           '<div class="pre">' + esc(r.waText) + '</div><div class="hint">לוחצים על הכפתור הירוק — הוואטסאפ נפתח עם ההודעה והקישור; שולחים ומסיימים.</div>',
           '<a class="btn wa" href="' + esc(r.waUrl) + '" target="_blank" rel="noopener">💬 שליחה בוואטסאפ</a><a class="btn ghost" href="' + esc(r.pdfUrl) + '" target="_blank" rel="noopener">PDF</a>');
       }, function (e) { b.disabled = false; b.textContent = 'יצירת ההצעה ושליחה'; toast(errMsg(e), 1); if (/לא הגיב/.test(errMsg(e))) reloadQuotes(function () { if (S.view === 'quotes') drawQuotes(); }); });
