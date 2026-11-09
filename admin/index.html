@@ -230,7 +230,7 @@ function api(action, data) {
       return;
     }
     var x = new XMLHttpRequest();
-    x.open('POST', API_URL); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); x.timeout = 60000;
+    x.open('POST', API_URL); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); x.timeout = action === 'quote_create' ? 240000 : 60000;
     x.onload = function () { var r; try { r = JSON.parse(x.responseText); } catch (e) { return reject(new Error('תשובה לא תקינה מהשרת')); } done(r); };
     x.onerror = function () { reject(new Error('אין חיבור לשרת')); };
     x.ontimeout = function () { reject(new Error('השרת לא הגיב')); };
@@ -720,13 +720,13 @@ function newQuote(lead) {
         items: items, subject: $('nsb').value.trim(), discount: Number($('nd').value) || 0, validDays: Number($('nv').value) || cat.validDays, note: $('nn').value.trim(), sendEmail: $('nse').querySelector('input').checked };
       if (!payload.customer || !payload.phone) return toast('חסרים שם וטלפון', 1);
       if (!items.filter(function (i) { return i.name && i.qty > 0; }).length) return toast('הוסיפו לפחות פריט אחד', 1);
-      var b = this; b.disabled = true; b.innerHTML = '<span class="spin"></span> יוצר PDF…';
+      var b = this; b.disabled = true; b.innerHTML = '<span class="spin"></span> יוצר PDF… (עד דקה)';
       api('quote_create', payload).then(function (r) {
         closeDrawer(); reloadQuotes(function () { if (S.view === 'quotes') drawQuotes(); });
         modal('ההצעה נוצרה — ' + r.quote.number, '<p>הקובץ נשמר ב-Drive' + (payload.leadId ? ' ובתיקיית הליד' : '') + (r.emailSent ? ', ונשלח במייל ל-' + esc(payload.email) : r.emailError ? '. <span class="flag">המייל לא נשלח: ' + esc(r.emailError) + '</span>' : '') + '.</p>' +
           '<div class="pre">' + esc(r.waText) + '</div><div class="hint">לוחצים על הכפתור הירוק — הוואטסאפ נפתח עם ההודעה והקישור; שולחים ומסיימים.</div>',
           '<a class="btn wa" href="' + esc(r.waUrl) + '" target="_blank" rel="noopener">💬 שליחה בוואטסאפ</a><a class="btn ghost" href="' + esc(r.pdfUrl) + '" target="_blank" rel="noopener">PDF</a>');
-      }, function (e) { b.disabled = false; b.textContent = 'יצירת ההצעה ושליחה'; toast(errMsg(e), 1); });
+      }, function (e) { b.disabled = false; b.textContent = 'יצירת ההצעה ושליחה'; toast(errMsg(e), 1); if (/לא הגיב/.test(errMsg(e))) reloadQuotes(function () { if (S.view === 'quotes') drawQuotes(); }); });
     };
   });
 }
