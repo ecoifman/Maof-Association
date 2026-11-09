@@ -131,6 +131,14 @@ tr.off td{color:var(--muted)}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
 @keyframes sp{to{transform:rotate(360deg)}}
 .loading{padding:40px;text-align:center;color:var(--muted)}
+.qi{display:grid;grid-template-columns:1fr 70px 110px 110px 34px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line2)}
+.qi .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+.qi input{padding:6px 8px}
+.qtot{display:flex;justify-content:space-between;align-items:center;padding:12px 0;font-size:16px;font-weight:700;border-top:2px solid var(--brand);margin-top:6px}
+.wa{background:#25d366!important;color:#fff!important}
+.pre{white-space:pre-wrap;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.55}
+.dl{list-style:none;margin:0;padding:0}.dl li{padding:6px 0;border-bottom:1px solid var(--line2);display:flex;gap:8px;justify-content:space-between}
+@media (max-width:640px){.qi{grid-template-columns:1fr 60px 90px;}.qi .qt,.qi .qx{display:none}}
 .mats{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .mat{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
 .mat:hover{border-color:#b6e4de}
@@ -169,9 +177,10 @@ var TILES = [
   { key: 'hours', ic: '⏱', c: '#dcfce7', name: 'דיווחי שעות', desc: 'נוכחות חודשית, תיקונים, ייצוא וקישורי שעון לצוות' },
   { key: 'reports', ic: '📝', c: '#fce7f3', name: 'דיווחי מדריכים', desc: 'מפגשים שדווחו מהשטח ואישורי חודש', soon: true },
   { key: 'materials', ic: '📁', c: '#ede9fe', name: 'חומרים', desc: 'מצגות, טפסים ומסמכים של העמותה' },
+  { key: 'quotes', ic: '💰', c: '#ffedd5', name: 'הצעות מחיר', desc: 'הצעה בלחיצה מתוך המחירון, שליחה בוואטסאפ/מייל ופולו-אפ אוטומטי' },
   { key: 'users', ic: '🔐', c: '#e0f2fe', name: 'משתמשים והרשאות', desc: 'מי נכנס למערכת ולאילו מודולים', admin: true }
 ];
-var MOD_NAMES = { leads: 'לידים', activities: 'יומן פעילות', hours: 'דיווחי שעות', reports: 'דיווחי מדריכים', materials: 'חומרים' };
+var MOD_NAMES = { leads: 'לידים', activities: 'יומן פעילות', hours: 'דיווחי שעות', reports: 'דיווחי מדריכים', materials: 'חומרים', quotes: 'הצעות מחיר' };
 
 var LS = {
   get: function (k, d) { try { var v = localStorage.getItem('maofhub_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -180,7 +189,8 @@ var LS = {
 };
 var S = { token: LS.get('token', ''), user: LS.get('user', null), view: 'home', menu: false,
           hours: { month: thisMonth(), tab: 'month', data: null, staff: null, roles: [], sel: null },
-          users: null, mods: [], mats: null };
+          users: null, mods: [], mats: null,
+          quotes: { tab: 'list', list: null, cat: null, leads: null, filter: '' } };
 
 /* ---------- עזרים ---------- */
 function $(id) { return document.getElementById(id); }
@@ -270,7 +280,7 @@ function render() {
   document.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { go(b.getAttribute('data-go')); }; });
   $('ub').onclick = function (e) { e.stopPropagation(); S.menu = !S.menu; render(); };
   if (S.menu) { $('mpw').onclick = function () { S.menu = false; render(); pwModal(); }; $('mlo').onclick = function () { S.menu = false; logout(); }; }
-  ({ home: viewHome, hours: viewHours, users: viewUsers, materials: viewMaterials }[S.view] || viewHome)();
+  ({ home: viewHome, hours: viewHours, users: viewUsers, materials: viewMaterials, quotes: viewQuotes }[S.view] || viewHome)();
 }
 document.addEventListener('click', function () { if (S.menu) { S.menu = false; render(); } });
 function go(v) { S.view = v; S.menu = false; window.scrollTo(0, 0); render(); }
@@ -565,6 +575,177 @@ function viewMaterials() {
         }).join('') + '</div>';
       }).join('') : '<div class="card"><div class="empty">עוד לא נוספו חומרים.</div></div>');
   }, function (e) { $('mb2').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
+}
+
+
+/* ---------- הצעות מחיר ---------- */
+var FUNC_STATUS_CLS = { 'נשלחה': 'warn', 'בשיחה': '', 'אושרה': 'on', 'נדחתה': 'off', 'פג תוקף': 'off' };
+function ils(n) { return '₪' + Number(n || 0).toLocaleString('he-IL', { maximumFractionDigits: 0 }); }
+function dmyFull(iso) { if (!iso) return ''; var d = new Date(iso); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
+function daysAgo(iso) { if (!iso) return ''; var n = Math.round((Date.now() - new Date(iso).getTime()) / 86400000); return n <= 0 ? 'היום' : n === 1 ? 'אתמול' : 'לפני ' + n + ' ימים'; }
+function viewQuotes() {
+  var Qs = S.quotes;
+  $('main').innerHTML =
+    '<div class="bar"><h2>הצעות מחיר</h2>' +
+      '<div class="seg"><button data-qt="list" class="' + (Qs.tab === 'list' ? 'on' : '') + '">הצעות</button><button data-qt="fu" class="' + (Qs.tab === 'fu' ? 'on' : '') + '">פולו-אפ להיום</button><button data-qt="prices" class="' + (Qs.tab === 'prices' ? 'on' : '') + '">מחירון ותנאים</button></div>' +
+      '<span class="spacer"></span>' +
+      (Qs.tab === 'list' ? '<input id="qf" placeholder="חיפוש לקוח / מוסד / מספר" style="width:220px" value="' + esc(Qs.filter) + '">' : '') +
+      '<button class="btn" id="qnew">+ הצעה חדשה</button>' +
+    '</div><div id="qb"><div class="loading"><span class="spin"></span> טוען…</div></div>';
+  document.querySelectorAll('[data-qt]').forEach(function (b) { b.onclick = function () { Qs.tab = b.getAttribute('data-qt'); viewQuotes(); }; });
+  $('qnew').onclick = function () { newQuote(null); };
+  if ($('qf')) $('qf').oninput = function () { Qs.filter = this.value; drawQuotes(); };
+  var need = [];
+  if (!Qs.cat) need.push(api('quote_catalog').then(function (r) { Qs.cat = r; }));
+  if (!Qs.list) need.push(api('quote_list').then(function (r) { Qs.list = r.quotes; }));
+  Promise.all(need).then(function () {
+    if (S.view !== 'quotes') return;
+    if (Qs.tab === 'list') drawQuotes(); else if (Qs.tab === 'fu') drawFollowups(); else drawPrices();
+  }, function (e) { if ($('qb')) $('qb').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
+}
+function reloadQuotes(after) { api('quote_list').then(function (r) { S.quotes.list = r.quotes; if (after) after(); }, function (e) { toast(errMsg(e), 1); }); }
+function drawQuotes() {
+  var Qs = S.quotes, list = Qs.list || [], f = (Qs.filter || '').trim();
+  if (f) list = list.filter(function (q) { return (q.customer + ' ' + q.org + ' ' + q.number + ' ' + q.phone).indexOf(f) >= 0; });
+  var open = 0, sum = 0, won = 0, wonSum = 0, due = 0;
+  (Qs.list || []).forEach(function (q) { if (q.status === 'נשלחה' || q.status === 'בשיחה') { open++; sum += q.total; if (q.nextFu && new Date(q.nextFu) <= new Date()) due++; } if (q.status === 'אושרה') { won++; wonSum += q.total; } });
+  $('qb').innerHTML =
+    '<div class="kpis"><div class="kpi hl"><small>הצעות פתוחות</small><b class="num">' + open + '</b></div><div class="kpi"><small>שווי פתוח</small><b class="num">' + ils(sum) + '</b></div>' +
+    '<div class="kpi' + (due ? ' bad' : '') + '"><small>פולו-אפ להיום</small><b class="num">' + due + '</b></div><div class="kpi"><small>אושרו</small><b class="num">' + won + ' · ' + ils(wonSum) + '</b></div></div>' +
+    (list.length ? '<div class="card"><table><thead><tr><th>מס׳</th><th>לקוח</th><th class="hide-sm">פעילות</th><th>סכום</th><th>סטטוס</th><th class="hide-sm">נשלחה</th><th class="hide-sm">פולו-אפ</th><th></th></tr></thead><tbody>' +
+      list.map(function (q) {
+        var fuTxt = q.status !== 'נשלחה' ? '—' : !q.nextFu ? 'הסתיים' : (new Date(q.nextFu) <= new Date() ? '<span class="flag">היום</span>' : dmyFull(q.nextFu)) + ' <span class="sub">(' + q.fuCount + ')</span>';
+        return '<tr class="r" data-q="' + esc(q.number) + '"><td class="num">' + esc(q.number) + '</td><td><div class="name">' + esc(q.org || q.customer) + '</div><div class="sub">' + esc(q.org ? q.customer : '') + ' <span class="ltr">' + esc(q.phone) + '</span></div></td>' +
+          '<td class="hide-sm sub">' + esc(q.items.map(function (i) { return i.name; }).join(', ')) + '</td><td class="num nw">' + ils(q.total) + '</td>' +
+          '<td><span class="badge ' + (FUNC_STATUS_CLS[q.status] || '') + '">' + esc(q.status) + '</span></td><td class="hide-sm sub nw">' + daysAgo(q.sentAt) + '</td><td class="hide-sm nw">' + fuTxt + '</td>' +
+          '<td><div class="acts"><a class="btn ghost sm" href="' + esc(q.pdf) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">PDF</a></div></td></tr>';
+      }).join('') + '</tbody></table></div>'
+    : '<div class="card"><div class="empty">' + (f ? 'אין תוצאות' : 'עוד אין הצעות. לחצו "+ הצעה חדשה".') + '</div></div>');
+  document.querySelectorAll('[data-q]').forEach(function (tr) { tr.onclick = function () { openQuote(tr.getAttribute('data-q')); }; });
+}
+function openQuote(number) {
+  var q = (S.quotes.list || []).filter(function (x) { return x.number === number; })[0];
+  if (!q) return;
+  closeDrawer();
+  var wrap = document.createElement('div'); wrap.id = 'dr';
+  wrap.innerHTML = '<div class="dim" id="dd"></div><aside class="drawer" role="dialog">' +
+    '<div class="dh"><div style="flex:1"><h2>הצעה ' + esc(q.number) + ' · ' + ils(q.total) + '</h2><div class="sub">' + esc(q.org || '') + (q.org ? ' · ' : '') + esc(q.customer) + ' · <span class="ltr">' + esc(q.phone) + '</span>' + (q.email ? ' · ' + esc(q.email) : '') + '</div></div><button class="icon" id="dx">✕</button></div>' +
+    '<div class="db">' +
+      '<div class="acts" style="justify-content:flex-start;margin-bottom:14px"><a class="btn ghost sm" href="' + esc(q.pdf) + '" target="_blank" rel="noopener">📄 PDF</a><button class="btn wa sm" id="qwa">💬 שליחה בוואטסאפ</button><button class="btn ghost sm" id="qem">✉ שליחה במייל</button></div>' +
+      '<div class="f"><label>סטטוס</label><select id="qst">' + S.quotes.cat.statuses.map(function (s) { return '<option' + (s === q.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div>' +
+      '<div class="f"><label>הערה פנימית</label><textarea id="qnote" rows="2">' + esc(q.note) + '</textarea></div>' +
+      '<div class="acts" style="justify-content:flex-start;margin-bottom:14px"><button class="btn sm" id="qsave">שמירה</button>' +
+        (q.status === 'נשלחה' && q.nextFu ? '<button class="btn ghost sm" id="qsnz">דחיית פולו-אפ בשבוע</button><button class="btn ghost sm" id="qstop">הפסקת פולו-אפ</button>' : '') + '</div>' +
+      '<h3 style="font-size:15px;margin:14px 0 8px">פריטים</h3><ul class="dl">' + q.items.map(function (i) { return '<li><span>' + esc(i.name) + (i.qty > 1 ? ' × ' + i.qty : '') + '</span><b class="num">' + ils(i.total != null ? i.total : i.qty * i.price) + '</b></li>'; }).join('') +
+        (q.discount ? '<li><span>הנחה</span><b class="num">−' + ils(q.discount) + '</b></li>' : '') + '<li><span>בתוקף עד</span><b>' + dmyFull(q.validUntil) + '</b></li></ul>' +
+      (q.log ? '<h3 style="font-size:15px;margin:18px 0 8px">היסטוריה</h3><div class="pre" style="background:#f8fafc;font-size:12.5px">' + esc(q.log) + '</div>' : '') +
+    '</div></aside>';
+  document.body.appendChild(wrap);
+  $('dd').onclick = closeDrawer; $('dx').onclick = closeDrawer;
+  $('qwa').onclick = function () { var b = this; b.disabled = true; api('quote_wa', { number: q.number }).then(function (r) { b.disabled = false; window.open(r.waUrl, '_blank', 'noopener'); }, function (e) { b.disabled = false; toast(errMsg(e), 1); }); };
+  $('qem').onclick = function () {
+    var em = q.email || prompt('לאיזו כתובת אימייל לשלוח?'); if (!em) return;
+    busy(this, api('quote_send_email', { number: q.number, email: em }), 'נשלח במייל ל-' + em, function () { reloadQuotes(function () { drawQuotes(); openQuote(q.number); }); });
+  };
+  $('qsave').onclick = function () { busy(this, api('quote_update', { number: q.number, status: $('qst').value, internalNote: $('qnote').value }), 'נשמר', function () { reloadQuotes(function () { drawQuotes(); closeDrawer(); }); }); };
+  if ($('qsnz')) $('qsnz').onclick = function () { busy(this, api('quote_update', { number: q.number, snoozeDays: 7 }), 'הפולו-אפ נדחה', function () { reloadQuotes(function () { drawQuotes(); closeDrawer(); }); }); };
+  if ($('qstop')) $('qstop').onclick = function () { busy(this, api('quote_update', { number: q.number, stopFollowups: true }), 'הפולו-אפ הופסק', function () { reloadQuotes(function () { drawQuotes(); closeDrawer(); }); }); };
+}
+// הצעה חדשה — מתוך ליד קיים (רשימת הלידים מה-CRM) או לקוח חופשי
+function newQuote(lead) {
+  var Qs = S.quotes, cat = Qs.cat;
+  if (!cat) return toast('המחירון עדיין נטען…', 1);
+  var leadsP = Qs.leads ? Promise.resolve() : api('list').then(function (r) { Qs.leads = r.leads; }).catch(function () { Qs.leads = []; });
+  leadsP.then(function () {
+    var items = [];
+    closeDrawer();
+    var wrap = document.createElement('div'); wrap.id = 'dr';
+    wrap.innerHTML = '<div class="dim" id="dd"></div><aside class="drawer" role="dialog" style="width:min(640px,100%)">' +
+      '<div class="dh"><div style="flex:1"><h2>הצעת מחיר חדשה</h2><div class="sub">בוחרים ליד או ממלאים לקוח, מוסיפים פריטים מהמחירון — וההצעה נוצרת כ-PDF ונשלחת</div></div><button class="icon" id="dx">✕</button></div>' +
+      '<div class="db">' +
+        '<div class="f"><label>ליד מה-CRM</label><input id="nl" list="nll" placeholder="התחילו להקליד שם או טלפון…"><datalist id="nll">' +
+          (Qs.leads || []).slice(0, 400).map(function (l) { return '<option value="' + esc(l.name + ' · ' + l.phone) + '">'; }).join('') + '</datalist></div>' +
+        '<div class="grid2"><div class="f"><label>שם איש הקשר *</label><input id="nc"></div><div class="f"><label>טלפון *</label><input id="np" dir="ltr" inputmode="tel"></div>' +
+        '<div class="f"><label>מוסד / רשות</label><input id="no" placeholder="למשל: בי״ס מעגנים, מעגן מיכאל"></div><div class="f"><label>אימייל (לשליחה גם במייל)</label><input id="ne" dir="ltr" type="email"></div></div>' +
+        '<h3 style="font-size:15px;margin:12px 0 6px">פריטים</h3>' +
+        '<div class="f"><select id="nadd"><option value="">+ הוספת פריט מהמחירון…</option>' + cat.items.map(function (it, i) { return '<option value="' + i + '">' + esc(it.name) + ' — ' + ils(it.price) + (it.unit ? ' / ' + esc(it.unit) : '') + '</option>'; }).join('') + '<option value="free">פריט חופשי</option></select></div>' +
+        '<div id="nitems"></div>' +
+        '<div class="grid2" style="margin-top:10px"><div class="f"><label>הנחה (₪)</label><input id="nd" type="number" min="0" value="0"></div><div class="f"><label>תוקף (ימים)</label><input id="nv" type="number" min="1" value="' + cat.validDays + '"></div></div>' +
+        '<div class="f"><label>נושא ההצעה (כותרת מעל הטבלה)</label><input id="nsb" placeholder="ברירת מחדל: הצעת מחיר + שם הפריט הראשון"></div>' +
+        '<div class="f"><label>הערה ללקוח (מודפסת בהצעה)</label><textarea id="nn" rows="2" placeholder="למשל: מועד מוצע, התאמות, מה כלול במיוחד"></textarea></div>' +
+        '<div class="qtot"><span>סה"כ (ללא מע"מ)</span><span id="ntot" class="num">₪0</span></div>' +
+        '<label class="chk on" id="nse"><input type="checkbox" checked> לשלוח גם במייל אם מולא אימייל</label>' +
+        '<div class="hint">עמוד 2 של ה-PDF ("פרטים") מודפס אוטומטית עם התנאים של הפריטים שנבחרו (עמודת "תנאים" במחירון), או התנאים הכלליים.</div>' +
+        '<div class="hint">אחרי היצירה ייפתח חלון עם ההודעה המוכנה לוואטסאפ. פולו-אפ אוטומטי יתוזמן לפי "תנאים" (' + esc(cat.terms['פולואפ_ימים'] || '2,5,10') + ' ימים).</div>' +
+        '<div style="margin-top:14px"><button class="btn" id="ngo">יצירת ההצעה ושליחה</button></div>' +
+      '</div></aside>';
+    document.body.appendChild(wrap);
+    $('dd').onclick = closeDrawer; $('dx').onclick = closeDrawer;
+    var selLead = lead || null;
+    function pickLead() {
+      var v = $('nl').value; var l = (Qs.leads || []).filter(function (x) { return x.name + ' · ' + x.phone === v; })[0];
+      if (!l) return; selLead = l; $('nc').value = l.name; $('np').value = l.phone; if (!$('no').value && l.city) $('no').value = l.city;
+    }
+    $('nl').onchange = pickLead; $('nl').oninput = pickLead;
+    if (selLead) { $('nl').value = selLead.name + ' · ' + selLead.phone; pickLead(); }
+    function total() { var t = 0; items.forEach(function (i) { t += (Number(i.qty) || 0) * (Number(i.price) || 0); }); t -= Number($('nd').value) || 0; $('ntot').textContent = ils(Math.max(0, t)); }
+    function drawItems() {
+      $('nitems').innerHTML = items.length ? items.map(function (it, i) {
+        return '<div class="qi" data-i="' + i + '"><div><input data-f="name" value="' + esc(it.name) + '" placeholder="שם הפריט"><input data-f="desc" class="qx" value="' + esc(it.desc) + '" placeholder="תיאור (רשות)" style="margin-top:4px;font-size:12px"></div>' +
+          '<input data-f="qty" type="number" min="0" step="1" value="' + it.qty + '" title="כמות"><input data-f="price" class="qt" type="number" min="0" value="' + it.price + '" title="מחיר ליחידה">' +
+          '<b class="num qt" data-t>' + ils(it.qty * it.price) + '</b><button class="icon" data-x title="הסרה">✕</button></div>';
+      }).join('') : '<div class="empty" style="padding:18px">עוד לא נבחרו פריטים</div>';
+      $('nitems').querySelectorAll('.qi').forEach(function (row) {
+        var i = +row.getAttribute('data-i');
+        row.querySelectorAll('input').forEach(function (inp) { inp.oninput = function () { items[i][inp.getAttribute('data-f')] = inp.type === 'number' ? Number(inp.value) : inp.value; var t = row.querySelector('[data-t]'); if (t) t.textContent = ils(items[i].qty * items[i].price); total(); }; });
+        row.querySelector('[data-x]').onclick = function () { items.splice(i, 1); drawItems(); };
+      });
+      total();
+    }
+    $('nadd').onchange = function () {
+      var v = this.value; this.value = ''; if (!v) return;
+      if (v === 'free') items.push({ code: '', name: '', desc: '', qty: 1, price: 0, unit: '' });
+      else { var it = cat.items[+v]; items.push({ code: it.code, name: it.name, desc: it.desc, qty: 1, price: it.price, unit: it.unit }); }
+      drawItems();
+    };
+    $('nd').oninput = total;
+    $('nse').onclick = function (e) { if (e.target.tagName !== 'INPUT') { var c = this.querySelector('input'); c.checked = !c.checked; } this.classList.toggle('on', this.querySelector('input').checked); };
+    drawItems();
+    $('ngo').onclick = function () {
+      var payload = { leadId: selLead && selLead.phone === $('np').value.trim() ? selLead.id : '', customer: $('nc').value.trim(), phone: $('np').value.trim(), org: $('no').value.trim(), email: $('ne').value.trim(),
+        items: items, subject: $('nsb').value.trim(), discount: Number($('nd').value) || 0, validDays: Number($('nv').value) || cat.validDays, note: $('nn').value.trim(), sendEmail: $('nse').querySelector('input').checked };
+      if (!payload.customer || !payload.phone) return toast('חסרים שם וטלפון', 1);
+      if (!items.filter(function (i) { return i.name && i.qty > 0; }).length) return toast('הוסיפו לפחות פריט אחד', 1);
+      var b = this; b.disabled = true; b.innerHTML = '<span class="spin"></span> יוצר PDF…';
+      api('quote_create', payload).then(function (r) {
+        closeDrawer(); reloadQuotes(function () { if (S.view === 'quotes') drawQuotes(); });
+        modal('ההצעה נוצרה — ' + r.quote.number, '<p>הקובץ נשמר ב-Drive' + (payload.leadId ? ' ובתיקיית הליד' : '') + (r.emailSent ? ', ונשלח במייל ל-' + esc(payload.email) : r.emailError ? '. <span class="flag">המייל לא נשלח: ' + esc(r.emailError) + '</span>' : '') + '.</p>' +
+          '<div class="pre">' + esc(r.waText) + '</div><div class="hint">לוחצים על הכפתור הירוק — הוואטסאפ נפתח עם ההודעה והקישור; שולחים ומסיימים.</div>',
+          '<a class="btn wa" href="' + esc(r.waUrl) + '" target="_blank" rel="noopener">💬 שליחה בוואטסאפ</a><a class="btn ghost" href="' + esc(r.pdfUrl) + '" target="_blank" rel="noopener">PDF</a>');
+      }, function (e) { b.disabled = false; b.textContent = 'יצירת ההצעה ושליחה'; toast(errMsg(e), 1); });
+    };
+  });
+}
+function drawFollowups() {
+  $('qb').innerHTML = '<div class="loading"><span class="spin"></span> מנסח תזכורות…</div>';
+  api('quote_followups_due', {}).then(function (r) {
+    if (S.view !== 'quotes' || S.quotes.tab !== 'fu') return;
+    $('qb').innerHTML = '<div class="note" style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px;color:var(--muted);font-size:13px">הצעות שנשלחו ועדיין בלי תשובה. לכל אחת נוסח מוכן — שולחים בוואטסאפ ומסמנים "נשלח" כדי שהתזכורת הבאה תתוזמן. מייל עם אותה רשימה נשלח לצוות כל בוקר. כשהבוט יעלה הוא ישלח לבד.</div>' +
+      (r.due.length ? r.due.map(function (d) {
+        return '<div class="card" style="padding:14px 16px;margin-bottom:10px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>' + esc(d.org || d.customer) + '</b><span class="sub">' + esc(d.org ? d.customer : '') + ' · הצעה ' + esc(d.number) + ' · ' + ils(d.total) + ' · נשלחה ' + daysAgo(d.sentAt) + '</span><span class="badge warn">תזכורת ' + d.attempt + '/' + d.of + '</span></div>' +
+          '<div class="pre" style="margin:10px 0">' + esc(d.text) + '</div><div class="acts" style="justify-content:flex-start"><a class="btn wa sm" href="' + esc(d.waUrl) + '" target="_blank" rel="noopener">💬 שליחה בוואטסאפ</a><button class="btn ghost sm" data-fs="' + esc(d.number) + '">✓ נשלח</button><a class="btn ghost sm" href="' + esc(d.pdf) + '" target="_blank" rel="noopener">PDF</a></div></div>';
+      }).join('') : '<div class="card"><div class="empty">אין פולו-אפים להיום 🙌</div></div>');
+    document.querySelectorAll('[data-fs]').forEach(function (b) { b.onclick = function () { busy(b, api('quote_followup_sent', { number: b.getAttribute('data-fs'), channel: 'וואטסאפ ידני' }), 'סומן', function () { S.quotes.list = null; viewQuotes(); }); }; });
+  }, function (e) { $('qb').innerHTML = '<div class="empty">' + esc(errMsg(e)) + '</div>'; });
+}
+function drawPrices() {
+  var cat = S.quotes.cat, t = cat.terms;
+  $('qb').innerHTML = (isAdmin() ? '<div class="note" style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:12px;color:var(--muted);font-size:13px">עורכים בגיליון: לשונית "מחירון" (מק"ט · שם · תיאור · מחיר · יחידה · פעיל · סדר) ולשונית "תנאים". השינויים נכנסים להצעה הבאה.</div>' : '') +
+    '<div class="card" style="margin-bottom:14px"><table><thead><tr><th>מק"ט</th><th>פריט</th><th class="hide-sm">תיאור</th><th>מחיר</th><th>יחידה</th></tr></thead><tbody>' +
+    cat.items.map(function (i) { return '<tr><td class="num">' + esc(i.code) + '</td><td class="name">' + esc(i.name) + '</td><td class="hide-sm sub">' + esc(i.desc) + '</td><td class="num nw">' + ils(i.price) + '</td><td>' + esc(i.unit) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+    '<div class="card" style="padding:14px 16px"><h3 style="font-size:15px;margin-bottom:10px">תנאים שמודפסים בהצעה</h3><ul class="dl">' +
+    [['תוקף', (t['תוקף_ימים'] || '30') + ' ימים'], ['תשלום', t['תנאי_תשלום']], ['מע"מ', t['מעמ']], ['תנאים כלליים', t['תנאים_כלליים']], ['פולו-אפ', 'ימים ' + (t['פולואפ_ימים'] || '2,5,10') + ' אחרי השליחה · מייל ל-' + (t['פולואפ_נמענים'] || '')]]
+      .map(function (p) { return '<li><span class="sub nw">' + p[0] + '</span><span style="white-space:pre-wrap;text-align:right;flex:1;margin-right:12px">' + esc(p[1] || '') + '</span></li>'; }).join('') + '</ul></div>';
 }
 
 /* ---------- חלון ---------- */
